@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election History</title>
+
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/javascript/lib/jquery-3.7.1.min.js"></script>
+  <script src="/javascript/lib/sweetalert2@11.js"></script>
+  <script src="/javascript/lib/socket.io.min.js" defer></script>
+  <script type="module" src="/javascript/admin/election_history.js" defer></script>
+  <style>
+    dialog::backdrop {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+
+<body class="w-[100vw] m-0 bg-blue-600 dvh flex overflow-hidden">
+
+  <%- include("../partials/sidebar.ejs") %>
+
+  <main class="relative flex flex-col w-full m-auto overflow-y-auto lg:w-4/5 no-scrollbar h-dvh lg:px-2">
+
+    <header class="sticky top-0 flex items-center justify-between w-full px-4 py-3 bg-blue-600 shadow-md lg:h-20 lg:px-6">
+      <button id="show-sidebar" class="p-2 text-white transition-colors duration-200 rounded-md lg:hidden hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Toggle sidebar">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+      <h1 class="font-sans text-2xl font-bold text-white lg:text-3xl">Election History</h1>
+      <!-- <div class="flex items-center space-x-2">
+        <button id="refresh-data" class="p-2 text-white transition-colors duration-200 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Refresh data">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+        <button id="user-menu" class="p-2 text-white transition-colors duration-200 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="User menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+        </button>
+      </div> -->
+    </header>
+
+    <div id="display-election-history" class="relative h-full px-3 pt-10 pb-6 mt-3 overflow-hidden overflow-x-hidden overflow-y-auto rounded-lg scroll-smooth bg-blue-50">
+
+      <% if (elections.length < 1) { %>
+
+      <!-- Display no election history -->
+      <section class="max-w-2xl mx-auto overflow-hidden bg-white rounded-lg shadow-lg">
+        <div class="p-8 text-center">
+          <div class="relative mb-6">
+            <img src="/img/empty-folder.webp" alt="Empty folder" class="w-32 h-32 mx-auto opacity-75">
+          </div>
+          <h1 class="mb-4 text-2xl font-bold text-gray-800">No Past Elections</h1>
+          <p class="mb-6 text-gray-600">It looks like there aren't any past elections to display at the moment.</p>
+        </div>
+      </section>
+
+      <% } else { %>
+
+      <!-- Carousel Container for Election History -->
+      <div class="w-full max-w-[700px] mx-auto relative flex items-center justify-center min-h-[400px] mb-24">
+
+        <!-- Carousel Navigation Arrows -->
+        <% if (elections.length > 1) { %>
+        <button id="prev-btn" class="absolute left-0 z-20 p-2 transition-all duration-300 -translate-x-3 -translate-y-1/2 bg-white border border-blue-100 rounded-full shadow-lg top-1/2 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:scale-110 lg:-translate-x-6">
+          <svg class="text-blue-600 w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <button id="next-btn" class="absolute right-0 z-20 p-2 transition-all duration-300 translate-x-3 -translate-y-1/2 bg-white border border-blue-100 rounded-full shadow-lg top-1/2 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:scale-110 lg:translate-x-6">
+          <svg class="text-blue-600 w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+        <% } %>
+
+        <!-- Carousel Track -->
+        <div id="carousel-container" class="w-full overflow-hidden rounded-lg">
+          <div id="carousel-track" class="flex transition-all duration-500 ease-out">
+
+            <!-- Display past elections -->
+            <% elections.forEach(election => { %>
+            <div class="carousel-item flex-shrink-0 <%= elections.length === 1 ? 'w-full' : '' %>">
+              <section id="election-card" class="lg:w-[700px] shadow-md border border-gray-200 w-full bg-white rounded-lg min-h-fit m-auto py-6 lg:px-12 px-4 mb-6 hover:shadow-lg transition-all duration-300">
+                <!-- Preserve the exact original structure for the header section -->
+                <div id="electionSection" class="relative flex justify-between pb-4 border-b border-gray-200">
+                  <div class="relative">
+                    <!-- Original Status Indicator with Original Classes -->
+                    <%  if (election.is_active) { %>
+                    <p id="display-status" class="px-3 py-1 mb-1 text-sm font-medium text-green-600 bg-green-100 rounded-full w-fit">Active</p>
+                    <% } else { %>
+                    <p id="display-status" class="px-3 py-1 mb-1 text-sm font-medium text-red-600 bg-red-100 rounded-full w-fit">Inactive</p>
+                    <% } %>
+
+                    <h2 id="election-title" class="mb-1 text-2xl font-bold text-gray-800"><%= election.election_name %></h2>
+                    <p id="election-card-id" class="text-xs text-gray-500"><%= election.election_id %></p>
+
+                    <!-- Enhanced candidate info while preserving original ID -->
+                    <div class="relative group">
+                      <% const electionCandidates = candidates.filter(candidate => candidate.election_id === election.election_id) %>
+                      <div class="flex items-center mt-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 text-blue-500">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <!-- Preserve original ID -->
+                        <p id="candidate-count" class="text-sm text-gray-600 cursor-pointer">Candidates: <%= electionCandidates.length %></p>
+                      </div>
+
+                      <!-- Enhanced dropdown with preserved ID -->
+                      <div id="candidate-details-<%= election.election_id %>" class="absolute z-30 hidden p-3 text-blue-700 bg-white border border-blue-100 rounded-md shadow-lg min-w-48 group-hover:block">
+                        <h4 class="pb-1 mb-2 font-semibold text-gray-800 border-b border-gray-100">Candidate Breakdown</h4>
+                        <% positions.forEach(position => { %>
+                        <% const positionCandidatesCount = electionCandidates.filter(candidate => candidate.position === position) %>
+                        <% if (positionCandidatesCount.length > 0) { %>
+                        <div class="flex items-center justify-between py-1">
+                          <p class="text-gray-600"><%= position.toLowerCase() %>:</p>
+                          <span class="px-2 py-0.5 bg-blue-50 rounded-md text-blue-700 font-medium"><%= positionCandidatesCount.length %></span>
+                        </div>
+                        <% } %>
+                        <% }) %>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Preserve the exact original structure for options menu -->
+                  <div id="option-section" class="relative">
+                    <img id="more-button" src="/img/more.webp" alt="more" class="p-1 transition-colors duration-200 rounded-full cursor-pointer w-9 h-9 hover:bg-gray-100">
+
+                    <div id="more-option" class="absolute right-0 z-30 hidden w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+                      <% if (election.is_active === 1) { %>
+                      <div id="toggleElectionEventVisibility" class="flex items-center px-4 py-2 transition-colors duration-200 cursor-pointer hover:bg-gray-50">
+                        <img id="viewStatusImage" src="/img/hide.webp" alt="hide" class="w-4 h-4 mr-2">
+                        <p id="viewStatus" class="text-gray-700">Deactivate</p>
+                      </div>
+                      <% } else { %>
+                      <div id="toggleElectionEventVisibility" class="flex items-center px-4 py-2 transition-colors duration-200 cursor-pointer hover:bg-gray-50">
+                        <img id="viewStatusImage" src="/img/view.webp" alt="view" class="w-4 h-4 mr-2">
+                        <p id="viewStatus" class="text-gray-700">Activate</p>
+                      </div>
+                      <% } %>
+                      <a href="/admin/election/complete/<%= election.election_id %>">
+                        <div id="election-report" class="flex items-center px-4 py-2 transition-colors duration-200 cursor-pointer hover:bg-gray-50">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" class="mr-2">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                            <polyline points="13 2 13 9 20 9" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                          </svg>
+                          <p class="text-gray-700">View Report</p>
+                        </div>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Date Information Section - Enhanced but preserving all original structure -->
+                <% 
+  const formatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  }
+  
+  const startDateTime = new Date(election.date_start);
+  const [startHour, startMinute, startSecond] = election.time_start.split(":");
+  startDateTime.setHours(startHour, startMinute, startSecond);
+  const formattedStartDateTime = startDateTime.toLocaleString('en-US', formatOptions);
+
+  const electionEndDateTime = new Date(election.date_end);
+  const [endHour, endMinute, endSecond] = election.time_end.split(":");
+  electionEndDateTime.setHours(endHour, endMinute, endSecond);
+  const formattedEndDateTime = electionEndDateTime.toLocaleString('en-US', formatOptions);
+  
+  // Calculate if election is current, past or future
+  const now = new Date();
+  const isCurrentElection = now >= startDateTime && now <= electionEndDateTime;
+  const isPastElection = now > electionEndDateTime;
+  %>
+
+                <div class="p-4 mt-4 space-y-4 rounded-lg bg-gray-50">
+
+
+                  <div class="flex items-center text-sm">
+                    <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-500">Start</p>
+                      <p class="font-semibold text-gray-900 "><%= formattedStartDateTime %></p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center text-sm">
+                    <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-500">End</p>
+                      <p class="font-semibold text-gray-900 "><%= formattedEndDateTime %></p>
+                      <% if (isCurrentElection) { %>
+                      <p class="mt-1 text-xs text-green-600">Election in progress</p>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Button - Preserving original ID and structure -->
+                <div class="flex justify-end mt-4">
+                  <a href="/admin/election/result/<%=election.election_id %>">
+                    <button id="view-result" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-all duration-200 ease-in-out transform bg-green-500 rounded-md shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:scale-105">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                        <path d="M2 12h5"></path>
+                        <path d="M7 17l-5-5 5-5"></path>
+                        <path d="M22 12H10"></path>
+                      </svg>
+                      View Results
+                    </button>
+                  </a>
+                </div>
+              </section>
+
+            </div>
+            <% }) %>
+
+          </div>
+        </div>
+
+        <!-- Election Name Shortcuts Navigation -->
+        <% if (elections.length > 1) { %>
+        <div class=" mb-2 w-full absolute bottom-[-70px] no-scrollbar">
+          <h3 class="mb-2 text-sm font-medium text-gray-700">Quick Navigation:</h3>
+          <div class="relative px-3 election-shortcuts-container no-scrollbar">
+            <div class="absolute top-0 bottom-0 left-0 z-10 w-8 pointer-events-none bg-gradient-to-r from-blue-50 to-transparent"></div>
+            <div class="px-2 -mx-2 overflow-auto election-shortcuts-scroll scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent no-scrollbar">
+              <div class="flex space-x-2 election-shortcuts-wrapper min-w-max no-scrollbar">
+                <% elections.forEach((election, index) => { %>
+                <button class="election-shortcut-btn text-sm px-3 py-2 rounded-md border transition-all duration-200 whitespace-nowrap <%= index === 0 ? 'bg-blue-100 border-blue-300 text-blue-800 font-medium' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100' %>" data-index="<%= index %>">
+                  <%= election.election_name %>
+                </button>
+                <% }) %>
+              </div>
+            </div>
+            <div class="absolute top-0 bottom-0 right-0 z-10 w-8 pointer-events-none bg-gradient-to-l from-blue-50 to-transparent"></div>
+          </div>
+        </div>
+
+        <!-- Small Dot Indicators -->
+        <div class="flex justify-center mt-4 space-x-2 absolute bottom-[-80px]">
+          <% for(let i = 0; i < elections.length; i++) { %>
+          <button class="carousel-indicator w-2 h-2 rounded-full bg-gray-300 hover:bg-blue-400 focus:outline-none transition-all duration-300 <%= i === 0 ? 'bg-blue-500' : '' %>" data-index="<%= i %>"></button>
+          <% } %>
+        </div>
+        <% } %>
+
+      </div>
+
+      <% } %>
+
+    </div>
+  </main>
+
+  <!-- Carousel JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const carouselTrack = document.getElementById('carousel-track');
+      const carouselItems = document.querySelectorAll('.carousel-item');
+      const indicators = document.querySelectorAll('.carousel-indicator');
+      const shortcutButtons = document.querySelectorAll('.election-shortcut-btn');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+
+      if (!carouselTrack) return;
+
+      let currentIndex = 0;
+      const itemCount = carouselItems.length;
+
+      // Set initial width for items
+      function setItemWidth() {
+        const containerWidth = document.getElementById('carousel-container').offsetWidth;
+
+        // For single item, ensure it takes full width
+        if (itemCount === 1) {
+          carouselItems[0].style.width = `${containerWidth}px`;
+          return;
+        }
+
+        carouselItems.forEach(item => {
+          item.style.width = `${containerWidth}px`;
+        });
+
+        // Update track position for current slide
+        updateTrackPosition();
+      }
+
+      // Update the track position based on current index
+      function updateTrackPosition() {
+        // If there's only one item, no need to update position
+        if (itemCount <= 1) return;
+
+        const containerWidth = document.getElementById('carousel-container').offsetWidth;
+        carouselTrack.style.transform = `translateX(-${currentIndex * containerWidth}px)`;
+
+        // Update indicators
+        indicators.forEach((indicator, index) => {
+          if (index === currentIndex) {
+            indicator.classList.add('bg-blue-500');
+            indicator.classList.remove('bg-gray-300');
+          } else {
+            indicator.classList.remove('bg-blue-500');
+            indicator.classList.add('bg-gray-300');
+          }
+        });
+
+        // Update shortcut buttons
+        shortcutButtons.forEach((btn, index) => {
+          if (index === currentIndex) {
+            btn.classList.add('bg-blue-100', 'border-blue-300', 'text-blue-800', 'font-medium');
+            btn.classList.remove('bg-gray-50', 'border-gray-200', 'text-gray-700');
+
+            // Scroll the active button into view with a smooth animation
+            setTimeout(() => {
+              btn.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+              });
+            }, 100);
+          } else {
+            btn.classList.remove('bg-blue-100', 'border-blue-300', 'text-blue-800', 'font-medium');
+            btn.classList.add('bg-gray-50', 'border-gray-200', 'text-gray-700');
+          }
+        });
+      }
+
+      // Initialize carousel
+      setItemWidth();
+
+      // Handle window resize
+      window.addEventListener('resize', setItemWidth);
+
+      // Only set up navigation if there are multiple items
+      if (itemCount > 1) {
+        // Previous button click
+        if (prevBtn) {
+          prevBtn.addEventListener('click', function() {
+            // Add a quick scale effect to the button
+            this.classList.add('scale-90');
+            setTimeout(() => {
+              this.classList.remove('scale-90');
+            }, 200);
+
+            currentIndex = (currentIndex - 1 + itemCount) % itemCount;
+            updateTrackPosition();
+          });
+        }
+
+        // Next button click
+        if (nextBtn) {
+          nextBtn.addEventListener('click', function() {
+            // Add a quick scale effect to the button
+            this.classList.add('scale-90');
+            setTimeout(() => {
+              this.classList.remove('scale-90');
+            }, 200);
+
+            currentIndex = (currentIndex + 1) % itemCount;
+            updateTrackPosition();
+          });
+        }
+
+        // Indicator clicks
+        indicators.forEach((indicator, index) => {
+          indicator.addEventListener('click', function() {
+            currentIndex = index;
+            updateTrackPosition();
+          });
+        });
+
+        // Shortcut button clicks
+        shortcutButtons.forEach((btn, index) => {
+          btn.addEventListener('click', function() {
+            currentIndex = index;
+            updateTrackPosition();
+          });
+        });
+
+        // Touch events for swiping
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isSwiping = false;
+
+        carouselTrack.addEventListener('touchstart', function(e) {
+          touchStartX = e.changedTouches[0].screenX;
+          isSwiping = true;
+          // Remove transition during swipe for more responsive feel
+          carouselTrack.style.transition = 'none';
+        }, false);
+
+        carouselTrack.addEventListener('touchmove', function(e) {
+          if (!isSwiping) return;
+
+          const currentTouch = e.changedTouches[0].screenX;
+          const diff = currentTouch - touchStartX;
+          const containerWidth = document.getElementById('carousel-container').offsetWidth;
+
+          // Calculate how far to move during the swipe, with limits
+          const offset = -currentIndex * containerWidth + diff;
+
+          // Apply the transform directly during the swipe
+          carouselTrack.style.transform = `translateX(${offset}px)`;
+        }, false);
+
+        carouselTrack.addEventListener('touchend', function(e) {
+          // Restore the transition for the snap effect
+          carouselTrack.style.transition = 'transform 500ms ease-out';
+
+          touchEndX = e.changedTouches[0].screenX;
+          handleSwipe();
+          isSwiping = false;
+        }, false);
+
+        function handleSwipe() {
+          const swipeThreshold = 50;
+          if (touchEndX < touchStartX - swipeThreshold) {
+            // Swipe left - next slide
+            currentIndex = (currentIndex + 1) % itemCount;
+            updateTrackPosition();
+          } else if (touchEndX > touchStartX + swipeThreshold) {
+            // Swipe right - previous slide
+            currentIndex = (currentIndex - 1 + itemCount) % itemCount;
+            updateTrackPosition();
+          } else {
+            // Not enough swipe distance, snap back
+            updateTrackPosition();
+          }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'ArrowLeft') {
+            currentIndex = (currentIndex - 1 + itemCount) % itemCount;
+            updateTrackPosition();
+          } else if (e.key === 'ArrowRight') {
+            currentIndex = (currentIndex + 1) % itemCount;
+            updateTrackPosition();
+          }
+        });
+      }
+
+      // Preserve existing functionality for more buttons
+      const moreButtons = document.querySelectorAll('#more-button');
+      const moreOptions = document.querySelectorAll('#more-option');
+
+      moreButtons.forEach((button, index) => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation();
+          moreOptions[index].classList.toggle('hidden');
+        });
+      });
+
+      // Close more options when clicking outside
+      document.addEventListener('click', function() {
+        moreOptions.forEach(option => {
+          if (!option.classList.contains('hidden')) {
+            option.classList.add('hidden');
+          }
+        });
+      });
+    });
+  </script>
+
+
+</body>
+
+</html>

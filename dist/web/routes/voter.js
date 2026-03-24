@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const voter_1 = require("../controllers/voter");
+const authorization_1 = require("../../middlewares/authorization");
+const router = (0, express_1.Router)();
+router.use(authorization_1.isAuthenticated);
+router.get('/election', voter_1.electionPage);
+router.get('/result/:id', voter_1.renderElectionResult);
+router.use(authorization_1.isValidVoter);
+router.get('/ballot/:electionId', voter_1.renderElectionBallot);
+exports.default = router;

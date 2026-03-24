@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const faceRecognition_1 = require("../controllers/faceRecognition");
+const authorization_1 = require("../../middlewares/authorization");
+const router = (0, express_1.Router)();
+router.use(authorization_1.isAuthenticated);
+router.get('/register-face', faceRecognition_1.faceRegisterPage);
+router.get('/authenticate-face', faceRecognition_1.faceAuthenticatePage);
+exports.default = router;

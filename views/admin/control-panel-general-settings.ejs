@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>General Settings</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/javascript/lib/jquery-3.7.1.min.js"></script>
+  <script src="/javascript/lib/sweetalert2@11.js"></script>
+  <script src="/javascript/lib/socket.io.min.js" defer></script>
+  <script type="module" src="/javascript/admin/control-panel-general-settings.js" defer></script>
+  <style>
+    .custom-input,
+    .custom-select {
+      width: 100%;
+      padding: 7px 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #fff;
+      font-size: 16px;
+      color: #333;
+      transition: border-color 0.3s ease;
+    }
+
+    .custom-select {
+      appearance: none;
+      /* Remove default styling */
+      -webkit-appearance: none;
+      /* Remove default styling for Safari */
+      -moz-appearance: none;
+      /* Remove default styling for Firefox */
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><polygon points="0,0 10,0 5,5" fill="%23333"/></svg>');
+      /* Custom arrow */
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 10px;
+    }
+
+    .custom-input:focus,
+    .custom-select:focus {
+      border-color: #007bff;
+      /* Change border color on focus */
+      outline: none;
+      /* Remove outline */
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      /* Add shadow */
+    }
+  </style>
+</head>
+
+<body class="w-[100vw] m-0 bg-blue-600 dvh flex overflow-hidden">
+
+  <%- include("../partials/sidebar.ejs") %>
+
+  <main class="relative flex flex-col w-full m-auto overflow-y-auto lg:w-4/5 no-scrollbar h-dvh lg:px-2">
+
+    <header class="sticky top-0 flex items-center justify-between w-full px-4 py-3 bg-blue-600 shadow-md lg:h-20 lg:px-6">
+      <button id="show-sidebar" class="p-2 text-white transition-colors duration-200 rounded-md lg:hidden hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Toggle sidebar">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+      <h1 class="font-sans text-2xl font-bold text-white lg:text-3xl">General Settings</h1>
+      <!-- <div class="flex items-center space-x-2">
+        <button id="refresh-data" class="p-2 text-white transition-colors duration-200 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Refresh data">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+        <button id="user-menu" class="p-2 text-white transition-colors duration-200 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="User menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+        </button>
+      </div> -->
+    </header>
+
+    <div class="relative flex flex-row h-full px-5 py-5 mt-3 overflow-hidden bg-white rounded-lg lg:mb-2 lg:px-0">
+
+      <div class="w-full h-full overflow-y-auto no-scrollbar lg:px-5 lg:w-3/5 lg:pr-8">
+
+        <div class="p-3 py-4 hover:bg-blue-50 lg:px-10 max-w-[800px]">
+          <div>
+            <p class="font-medium ">Trusted IP Address</p>
+            <p class="text-sm text-gray-400">Trusted IP addresses will allow all listed IP addresses to register their devices.</p>
+          </div>
+          <form id="trusted-ip-address-form" class="flex flex-col gap-1 py-3 lg:flex-row">
+            <div class="flex flex-col w-full gap-1 lg:flex-row">
+              <input type="text" id="network-name" class="custom-input" placeholder="Network Name">
+              <input type="text" id="trusted-ip-address" class="custom-input" placeholder="Enter IP Address">
+            </div>
+            <button type="submit" class="px-4 py-2 text-xs text-white bg-blue-500 rounded lg:ml-2 lg:text-sm text-nowrap">Save Trusted IP</button>
+          </form>
+
+          <span id="show-trusted-ips" class="text-sm text-blue-500 underline cursor-pointer underline-offset-2">Show Trusted IPs</span>
+        </div>
+
+        <br>
+
+        <div class="p-3 py-4 hover:bg-blue-50 lg:px-10 max-w-[800px]">
+          <div>
+            <p class="font-medium ">Add Department</p>
+            <p class="text-sm text-gray-400">Add a new department to the system.</p>
+          </div>
+          <form id="department-form" class="flex flex-col gap-1 py-3 lg:flex-row">
+            <input type="text" id="department" class="custom-input" placeholder="Enter Department Code">
+
+            <button type="submit" class="px-3 py-1 text-xs text-white bg-blue-500 rounded lg:ml-2 lg:text-sm text-nowrap">Add Department</button>
+          </form>
+
+          <span id="show-all-departments" class="text-sm text-blue-500 underline cursor-pointer underline-offset-2">Show All Departments</span>
+        </div>
+
+        <!-- Program Settings -->
+        <div class="p-3 py-4 hover:bg-blue-50 lg:px-10 max-w-[800px]">
+          <div>
+            <p class="font-medium">Add Program</p>
+            <p class="text-sm text-gray-400">Add a new program to the system.</p>
+          </div>
+          <form id="program-form" class="flex flex-col gap-1 py-3 lg:flex-row">
+            <select id="program-department" class="custom-select">
+              <option value=""> Select Department</option>
+              <% departments.forEach(department => { %>
+              <option value="<%= department.department_id %>"><%= department.department_code %></option>
+              <% }) %>
+            </select>
+            <input type="text" id="program" class="custom-input" placeholder="Enter Program Code">
+
+            <button type="submit" class="px-5 py-1 text-xs text-white bg-blue-500 rounded lg:ml-2 lg:text-sm text-nowrap">Add Program</button>
+          </form>
+
+          <span id="show-all-programs" class="text-sm text-blue-500 underline cursor-pointer underline-offset-2">Show All Programs</span>
+        </div>
+
+        <div id="senator-vote-limit" class="p-3 py-4 hover:bg-blue-50 lg:px-10 max-w-[800px]">
+          <div>
+            <p class="font-medium">Senator Max Vote</p>
+            <p class="text-sm text-gray-400">Set the maximum number of senator a voter can select based on their department.</p>
+          </div>
+
+          <form id="set-vote-limit-form" class="flex flex-col gap-1 py-3 lg:flex-row">
+            <select id="department-to-set-vote-limit" class="custom-select">
+              <option value="">Select Department</option>
+              <% departments.forEach(department => { %>
+              <option value="<%= department.department_id %>"><%= department.department_code %></option>
+              <% }) %>
+            </select>
+            <input type="number" id="senator-max-vote" class="custom-input" placeholder="Enter Max Vote Limit" required min="1">
+
+            <button type="submit" class="px-3 py-1 text-xs text-white bg-blue-500 rounded lg:ml-2 lg:text-sm text-nowrap">Save Vote Limit</button>
+          </form>
+
+          <span id="show-all-max-votes" class="text-sm text-blue-500 underline cursor-pointer underline-offset-2">Show All Department Max Votes</span>
+        </div>
+
+        <br>
+
+        <!-- Add Position Settings -->
+        <div class="p-3 py-4 hover:bg-blue-50 lg:px-10 max-w-[800px]">
+          <div>
+            <p class="font-medium ">Candidate Position</p>
+            <p class="text-sm text-gray-400">Add a new candidate position to the system.</p>
+          </div>
+          <form id="position-form" class="flex flex-col gap-1 py-3 lg:flex-row">
+            <input type="text" id="position" class="custom-input" placeholder="Enter Position">
+
+            <button type="submit" class="px-5 py-1 text-xs text-white bg-blue-500 rounded lg:ml-2 lg:text-sm text-nowrap">Add Position</button>
+          </form>
+
+          <span id="show-all-positions" class="text-sm text-blue-500 underline cursor-pointer underline-offset-2">Show All Positions</span>
+        </div>
+
+        <br>
+
+        <!-- Register Face Option Toggle -->
+        <!-- <div id="register-face-option-toggle" class="p-3 py-5 hover:bg-blue-50 lg:px-10 max-w-[800px]">
+          <div>
+            <p class="font-medium">Toggle Register Face Option</p>
+            <p class="text-sm text-gray-400">Allow voters to register their faces during the registration process.</p>
+          </div>
+          <form action="/save-vote-limit" method="POST" class="flex items-center py-3">
+            <div class="flex items-center flex-grow gap-3">
+              <label class="inline-flex items-center cursor-pointer">
+                <input id="voter" type="checkbox" value="voter" class="sr-only peer">
+                <div class=" relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+            </form>
+        </div> -->
+
+      </div>
+
+      <div id="data-table-container" class="absolute top-2 right-0 lg:right-2 z-10 hidden w-full h-[98%] p-3 overflow-y-auto bg-white border border-blue-400 rounded-md shadow-lg lg:w-2/5">
+        <div class="w-full">
+          <button id="close-data-table-container" class="focus:outline-none">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div id="display-table-data" class="w-full overflow-y-auto">
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+</body>
+
+</html>

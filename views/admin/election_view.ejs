@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Events</title>
+
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/javascript/lib/jquery-3.7.1.min.js" defer></script>
+  <script src="/javascript/lib/sweetalert2@11.js" defer></script>
+  <script src="/javascript/lib/socket.io.min.js" defer></script>
+  <script type="module" src="/javascript/admin/election_view.js" defer></script>
+  <style>
+    dialog::backdrop {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+
+<body class="w-[100vw] m-0 bg-blue-600 dvh flex overflow-hidden">
+
+  <%- include("../partials/sidebar.ejs") %>
+
+  <main class="relative flex flex-col w-full m-auto overflow-y-auto lg:w-4/5 no-scrollbar h-dvh lg:px-2">
+
+    <header class="sticky top-0 flex items-center justify-between w-full px-4 py-3 bg-blue-600 shadow-md lg:h-20 lg:px-6">
+      <button id="show-sidebar" class="p-2 text-white transition-colors duration-200 rounded-md lg:hidden hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Toggle sidebar">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+      <h1 class="font-sans text-2xl font-bold text-white lg:text-3xl">Manage Election</h1>
+      <!-- <div class="flex items-center space-x-2">
+        <button id="refresh-data" class="p-2 text-white transition-colors duration-200 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Refresh data">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+        <button id="user-menu" class="p-2 text-white transition-colors duration-200 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="User menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+        </button>
+      </div> -->
+    </header>
+
+    <div class="relative h-full px-3 mt-3 mb-2 overflow-hidden overflow-x-hidden overflow-y-auto rounded-lg pt-14 scroll-smooth bg-blue-50 ">
+
+      <% if (elections.length < 1) { %>
+
+      <section class="max-w-2xl mx-auto overflow-hidden bg-white rounded-lg shadow-md">
+        <div class="p-8 text-center w-[90%] m-auto">
+          <img src="/img/empty-folder.webp" alt="Empty folder" class="w-24 h-24 mx-auto mb-6 opacity-75">
+          <h1 class="mb-4 text-2xl font-bold text-gray-800">No Elections Scheduled</h1>
+          <p class="mb-6 text-gray-600">It seems there are no elections scheduled at the moment. Would you like to create a new one?</p>
+          <a href="/admin/election/new" class="inline-block">
+            <button class="px-6 py-3 font-semibold text-white transition duration-300 ease-in-out transform bg-blue-500 rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 hover:-translate-y-1">
+              <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Create New Election
+            </button>
+          </a>
+        </div>
+      </section>
+
+      <% } else { %>
+
+      <% elections.forEach(element => { %>
+
+      <section id="election-card" class="lg:w-[700px] shadow-md border border-gray-200 w-full bg-white rounded-lg min-h-fit m-auto py-6 lg:px-12 px-4 mb-6">
+
+        <div id="electionSection" class="relative flex justify-between pb-4 border-b border-gray-200">
+
+          <div class="relative">
+
+            <%  if (element.is_active) { %>
+
+            <p id="display-status" class="px-3 py-1 mb-1 text-sm font-medium text-green-600 bg-green-100 rounded-full w-fit">Active</p>
+
+            <% } else { %>
+
+            <p id="display-status" class="px-3 py-1 mb-1 text-sm font-medium text-red-600 bg-red-100 rounded-full w-fit">Inactive</p>
+
+            <% } %>
+
+            <h2 id="election-title" class="mb-1 text-2xl font-bold text-gray-800"><%= element.election_name %></h2>
+            <p id="election-card-id" class="text-xs text-gray-500"><%= element.election_id %></p>
+
+            <div class="relative group">
+              <% 
+                const electionCandidates = candidates.filter(candidate => candidate.election_id === element.election_id)
+              %>
+              <p id="candidate-count" class="text-sm text-gray-600 cursor-pointer">Candidates: <%= electionCandidates.length %></p>
+
+
+              <div id="candidate-details-<%= element.election_id %>" class="absolute z-30 hidden p-3 text-blue-700 bg-white border border-blue-100 rounded-md shadow-lg min-w-48 group-hover:block">
+                <h4 class="pb-1 mb-2 font-semibold text-gray-800 border-b border-gray-100">Candidate Breakdown</h4>
+                <% positions.forEach(position => { %>
+                <% const positionCandidatesCount = electionCandidates.filter(candidate => candidate.position === position) %>
+                <% if (positionCandidatesCount.length > 0) { %>
+                <div class="flex items-center justify-between py-1">
+                  <p class="text-gray-600"><%= position.toLowerCase() %>:</p>
+                  <span class="px-2 py-0.5 bg-blue-50 rounded-md text-blue-700 font-medium"><%= positionCandidatesCount.length %></span>
+                </div>
+                <% } %>
+                <% }) %>
+              </div>
+
+            </div>
+          </div>
+
+          <div id="option-section" class="relative">
+            <img id="more-button" src="/img/more.webp" alt="more" class="p-1 transition-colors duration-200 rounded-full cursor-pointer w-9 h-9 hover:bg-gray-100">
+
+            <div id="more-option" class="absolute right-0 z-10 hidden w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+
+              <div id="election-edit-button" class="flex items-center px-4 py-2 transition-colors duration-200 cursor-pointer hover:bg-gray-50">
+                <img src="/img/pencil.webp" alt="edit" class="w-4 h-4 mr-2">
+                <p class="text-gray-700">Edit</p>
+              </div>
+
+              <% if (element.is_active === 1) { %>
+              <div id="toggleElectionEventVisibility" class="flex items-center px-4 py-2 transition-colors duration-200 cursor-pointer hover:bg-gray-50">
+                <img id="viewStatusImage" src="/img/hide.webp" alt="hide" class="w-4 h-4 mr-2">
+                <p id="viewStatus" class="text-gray-700">Deactivate</p>
+              </div>
+
+              <% } else { %>
+              <div id="toggleElectionEventVisibility" class="flex items-center px-4 py-2 transition-colors duration-200 cursor-pointer hover:bg-gray-50">
+                <img id="viewStatusImage" src="/img/view.webp" alt="view" class="w-4 h-4 mr-2">
+                <p id="viewStatus" class="text-gray-700">Activate</p>
+              </div>
+
+              <% } %>
+
+              <div id="delete_election_button" class="flex items-center px-4 py-2 transition-colors duration-200 cursor-pointer hover:bg-gray-50">
+                <img src="/img/trash.webp" alt="delete" class="w-4 h-4 mr-2">
+                <p class="text-gray-700">Delete</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <% 
+        const formatOptions = {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+        }
+        
+        const startDateTime = new Date(element.date_start);
+        const [startHour, startMinute, startSecond] = element.time_start.split(":");
+        startDateTime.setHours(startHour, startMinute, startSecond);
+        const formattedStartDateTime = startDateTime.toLocaleString('en-US', formatOptions);
+
+        const electionEndDateTime = new Date(element.date_end);
+        const [endHour, endMinute, endSecond] = element.time_end.split(":");
+        electionEndDateTime.setHours(endHour, endMinute, endSecond);
+        const formattedEndDateTime = electionEndDateTime.toLocaleString('en-US', formatOptions);
+        %>
+
+        <div class="p-4 mt-4 space-y-4 text-sm rounded-lg bg-gray-50">
+          <div class="flex items-center">
+            <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Start</p>
+              <p id="displayStart" class="font-semibold text-gray-900 "><%= formattedStartDateTime %></p>
+            </div>
+          </div>
+
+          <div class="flex items-center">
+            <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-gray-500">End</p>
+              <p id="displayEnd" class="font-semibold text-gray-900 "><%= formattedEndDateTime %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+          <button id="add-candidate" class="px-4 py-2 text-sm font-medium text-white transition-colors duration-200 bg-blue-500 rounded-md hover:bg-blue-600">Add Candidate</button>
+        </div>
+
+        <div id="election-info" class="hidden" data-date-start="<%= element.date_start %>" data-time-start="<%= element.time_start  %>"></div>
+
+      </section>
+
+      <% }) %>
+
+      <% } %>
+
+    </div>
+  </main>
+
+  <!-- Modal edit election -->
+  <dialog id="election-edit-modal" class="rounded-lg">
+    <div class="self-center mt-5 bg-white rounded-xl lg:w-[700px] min-h-96 max-w-4/5 auto max-h-3/5 shadow-lg">
+
+      <form id="update_election_form" class="px-24 py-14">
+        <span class="flex justify-end gap-2 text-sm text-gray-400">
+          <p>Election ID: </p>
+          <p id="election_id"></p>
+        </span>
+
+        <label for="election_name" class="text-sm font-medium text-gray-700">Election Name</label>
+        <input id="election_name" type="text" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        <div id="election_name_error_message" class="h-5 mt-1 text-sm text-red-600"></div>
+
+        <h3 class="mt-6 mb-2 text-lg font-semibold">Start</h3>
+
+        <div class="flex flex-1 gap-4">
+          <div class="w-1/2">
+            <label for="date_start" class="text-sm font-medium text-gray-700">Date</label>
+            <input id="date_start" type="date" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <div id="startdate_error_message" class="h-5 mt-1 text-sm text-red-600"></div>
+          </div>
+
+          <div class="w-1/2">
+            <label for="time_start" class="text-sm font-medium text-gray-700">Time</label>
+            <input id="time_start" type="time" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <div id="starttime_error_message" class="h-5 mt-1 text-sm text-red-600"></div>
+          </div>
+        </div>
+
+        <h3 class="mt-6 mb-2 text-lg font-semibold">End</h3>
+
+        <div class="flex flex-1 gap-4 mb-6">
+          <div class="w-1/2">
+            <label for="date_end" class="text-sm font-medium text-gray-700">Date</label>
+            <input id="date_end" type="date" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <div id="enddate_error_message" class="h-5 mt-1 text-sm text-red-600"></div>
+          </div>
+
+          <div class="w-1/2">
+            <label for="time_end" class="text-sm font-medium text-gray-700">Time</label>
+            <input id="time_end" type="time" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <div id="endtime_error_message" class="h-5 mt-1 text-sm text-red-600"></div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-4">
+          <button id="closeModal" formmethod="dialog" type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Save Changes</button>
+        </div>
+      </form>
+
+    </div>
+  </dialog>
+
+</body>
+
+</html>

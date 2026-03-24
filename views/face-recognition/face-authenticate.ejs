@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authenticate Face</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="/javascript/lib/sweetalert2@11.js" defer></script>
+  <script src="/javascript/face-recognition/face-authenticate.js" defer></script>
+
+</head>
+
+<body class="w-full h-screen">
+
+  <input type="hidden" id="election-id" value="<%= electionId %>">
+
+  <div class="w-full lg:w-2/3: h-[90%] flex items-center flex-col">
+
+    <h2 class="py-3 font-bold text-center text-gray-800 lg:text-4xl h-fit">Authenticate Face</h2>
+    <video id="video" autoplay class="h-[90%] w-full"></video>
+    <div class='relative flex flex-col items-center p-2 text-center'>
+      <div id="message" aria-live="polite" class="py-2 text-sm lg:text-lg"></div>
+      <div id="connection-status" class="px-2 py-1 text-sm font-semibold rounded-md w-fit">Status: Connecting...</div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>

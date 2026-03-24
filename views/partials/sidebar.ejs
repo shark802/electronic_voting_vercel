@@ -1,0 +1,153 @@
+<div id="sidebar" class="absolute z-40 w-full bg-black rounded-tr-md rounded-br-md bg-opacity-40 lg:block h-dvh lg:relative lg:w-1/5">
+
+  <!-- <svg id="hide-sidebar" xmlns="http://www.w3.org/2000/svg" class="absolute w-10 h-10 m-2 bg-opacity-50 rounded-md right-4 top-4 bg-slate-500 lg:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+  </svg> -->
+
+  <nav class="relative z-50 flex flex-col w-4/5 px-2 pt-2 font-sans bg-white rounded-tr-lg rounded-br-lg h-dvh lg:w-full">
+
+    <div class="text-white rounded-md bg-gradient-to-r from-blue-600 to-blue-800">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center space-x-3">
+          <img src="/img/bcc-logo.webp" alt="BCC Logo" class="w-10 h-10 p-1 bg-white rounded-full">
+          <div>
+            <h1 class="text-sm font-bold leading-tight">BCC WEB BASED E-VOTING</h1>
+            <p class="text-xs text-blue-200">WITH FACE RECOGNITION</p>
+          </div>
+        </div>
+        <button id="hide-sidebar" class="p-2 text-white rounded-full hover:bg-blue-700 lg:hidden focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="px-4 py-2 bg-blue-800 bg-opacity-50 rounded-md">
+        <p class="text-sm font-medium">Admin Dashboard</p>
+      </div>
+    </div>
+
+    <hr class="my-4 border-gray-200">
+
+    <ul class="no-scrollbar overflow-auto overflow-x-hidden max-h-[77%] scroll-m-0 py-2 space-y-1">
+
+      <li class="w-full">
+        <div class="relative block w-full">
+          <a href="/admin/dashboard/overview" class="flex items-center px-4 py-2 text-gray-700 transition-colors duration-150 ease-in-out rounded-md hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span id="dashboard_nav" class="text-sm font-medium">Dashboard</span>
+          </a>
+          <div id="dashboard_subpage" class="hidden pl-4 mt-1 space-y-1 border-l-2 border-gray-400 ml-7">
+            <a id="overview_page" href="/admin/dashboard/overview" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Overview</a>
+            <a id="vote_tally_page" href="/admin/dashboard/vote-tally" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Vote Tally</a>
+            <a id="analytics_page" href="/admin/dashboard/analytics" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Analytics</a>
+          </div>
+        </div>
+      </li>
+
+      <li class="w-full">
+        <div class="relative block w-full">
+          <a id="election_col" href="/admin/election/view" class="flex items-center px-4 py-2 text-gray-700 transition-colors duration-150 ease-in-out rounded-md hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span id="election_nav" class="text-sm font-medium">Election</span>
+          </a>
+          <div id="election_subpage" class="hidden pl-4 mt-1 space-y-1 border-l-2 border-gray-400 ml-7">
+            <a id="view_election_page" href="/admin/election/view" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">View Election</a>
+            <a id="create_election_page" href="/admin/election/new" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Create Election</a>
+            <a id="election_history_page" href="/admin/election/history" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">History</a>
+          </div>
+        </div>
+      </li>
+
+      <li class="w-full">
+        <div class="relative block w-full">
+          <a href="/admin/candidate/manage" class="flex items-center px-4 py-2 text-gray-700 transition-colors duration-150 ease-in-out rounded-md hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span id="candidate_nav" class="text-sm font-medium">Candidate</span>
+          </a>
+          <div id="candidate_subpage" class="hidden pl-4 mt-1 space-y-1 border-l-2 border-gray-400 ml-7">
+            <a id="manage_candidate" href="/admin/candidate/manage" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Manage Candidate</a>
+            <a id="add_candidate" href="/admin/candidate/new" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Add Candidate</a>
+          </div>
+        </div>
+      </li>
+
+      <li class="w-full">
+        <div class="relative block w-full">
+          <a href="/admin/voter/manage" class="flex items-center px-4 py-2 text-gray-700 transition-colors duration-150 ease-in-out rounded-md hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span id="voter_nav" class="text-sm font-medium">Voter</span>
+          </a>
+          <div id="voter_subpage" class="hidden pl-4 mt-1 space-y-1 border-l-2 border-gray-400 ml-7">
+            <a id="manage_voter_nav" href="/admin/voter/manage" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Voter Activity</a>
+          </div>
+        </div>
+      </li>
+
+      <!-- <li class="w-full">
+        <div class="relative block w-full">
+          <a href="/admin/department/manage" class="flex items-center px-4 py-2 text-gray-700 transition-colors duration-150 ease-in-out rounded-md hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3V3z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h6v6H9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v6h6V3H9z" />
+            </svg>
+            <span id="department_nav" class="text-sm font-medium">Department</span>
+          </a>
+          <div id="department_subpage" class="hidden pl-4 mt-1 space-y-1 border-l-2 border-gray-400 ml-7">
+            <a id="manage_department_nav" href="/admin/department/manage" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Manage Departments</a>
+            <a id="programs_nav" href="/admin/department/programs" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Manage Programs</a>
+          </div>
+        </div>
+      </li> -->
+
+      <!-- <li class="w-full">
+        <div class="relative block w-full">
+          <a href="/admin/register-device/request" class="flex items-center px-4 py-2 text-gray-700 transition-colors duration-150 ease-in-out rounded-md hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <span id="register_device_nav" class="text-sm font-medium">Register Device</span>
+          </a>
+          <div id="register_device_subpage" class="hidden pl-4 mt-1 space-y-1 border-l-2 border-gray-400 ml-7">
+            <a id="review_request" href="/admin/register-device/request" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Review Request</a>
+            <a id="registered_device" href="/admin/register-device/registered" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Registered Device</a>
+          </div>
+        </div>
+      </li> -->
+
+      <li class="w-full">
+        <div class="relative block w-full">
+          <a href="/admin/control-panel/general-settings" class="flex items-center px-4 py-2 text-gray-700 transition-colors duration-150 ease-in-out rounded-md hover:bg-gray-100 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span id="control_panel_nav" class="text-sm font-medium">Control Panel</span>
+          </a>
+          <div id="control_panel_subpage" class="hidden pl-4 mt-1 space-y-1 border-l-2 border-gray-400 ml-7">
+            <a id="general_settings" href="/admin/control-panel/general-settings" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">General Settings</a>
+            <a id="fetch_user" href="/admin/control-panel/user" class="block py-1 pl-2 text-sm text-gray-600 hover:text-gray-900">Manage User</a>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <div class="p-4 mt-auto border-t border-gray-200">
+      <button id="logout-button" class="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white transition-colors duration-150 ease-in-out bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" class="w-6 h-6 mr-2">
+          <path d="M9.00195 7C9.01406 4.82497 9.11051 3.64706 9.87889 2.87868C10.7576 2 12.1718 2 15.0002 2L16.0002 2C18.8286 2 20.2429 2 21.1215 2.87868C22.0002 3.75736 22.0002 5.17157 22.0002 8L22.0002 16C22.0002 18.8284 22.0002 20.2426 21.1215 21.1213C20.2429 22 18.8286 22 16.0002 22H15.0002C12.1718 22 10.7576 22 9.87889 21.1213C9.11051 20.3529 9.01406 19.175 9.00195 17" stroke-width="1.5" stroke-linecap="round"></path>
+          <path d="M15 12L2 12M2 12L5.5 9M2 12L5.5 15" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </nav>
+</div>

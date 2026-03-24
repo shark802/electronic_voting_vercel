@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/javascript/lib/jquery-3.7.1.min.js"></script>
+  <script src="/javascript/lib/sweetalert2@11.js"></script>
+  <script src="/javascript/lib/socket.io.min.js" defer></script>
+  <script type="module" src="/javascript/admin/control-panel-user.js" defer></script>
+
+  <style>
+    .rotate-180 {
+      transform: rotate(180deg);
+    }
+
+    #details-icon {
+      transition: transform 0.3s ease;
+    }
+
+    [popover]::backdrop {
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Spinning animation */
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body class="w-[100vw] m-0 bg-blue-600 dvh flex overflow-hidden">
+
+  <%- include("../partials/sidebar.ejs") %>
+
+  <main class="relative flex flex-col w-full m-auto overflow-y-auto lg:w-4/5 no-scrollbar h-dvh lg:px-2">
+
+    <header class="sticky top-0 flex items-center justify-between w-full px-4 py-3 bg-blue-600 shadow-md lg:h-20 lg:px-6">
+      <button id="show-sidebar" class="p-2 text-white transition-colors duration-200 rounded-md lg:hidden hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Toggle sidebar">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+      <h1 class="font-sans text-2xl font-bold text-white lg:text-3xl">Manage User</h1>
+    </header>
+
+    <div class="relative flex flex-wrap justify-start flex-grow h-full mt-3 overflow-x-hidden overflow-y-auto bg-white rounded-lg lg:overflow-y-hidden lg:mb-2 no-scrollbar">
+      <div class="flex items-center w-full gap-2 p-2 bg-white lg:h-14">
+        <button id="add-user-button" class="inline-flex px-2 items-center py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 focus:outline-non transition-all duration-200 ease-in-out">
+          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New User
+        </button>
+        <form id="search-user" class="flex border border-gray-400 rounded-full">
+          <input type="search" id="id_number" placeholder="Search" class="pl-3 rounded-tl-full rounded-bl-full focus:outline-none">
+          <button id="search-user-button" type="submit" class="relative w-6 px-2 lg:w-8"><img src="/img/magnifying-glass.webp" alt="search" class="absolute w-4 m-auto transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 lg:w-6 opacity-70"></button>
+        </form>
+
+        <div id="import-user-container">
+
+          <button id="import-user-button" class="absolute right-0 flex items-center px-4 py-1 mx-3 space-x-2 text-sm font-medium text-white transition-all duration-200 ease-in-out bg-blue-500 rounded-full shadow-md top-3 hover:bg-blue-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            <span>Import User</span>
+          </button>
+
+          <div id="import-user-dropdown" class="absolute rounded-md right-0 z-10 hidden h-[98vh] lg:h-[98%] m-2 px-4 w-[97%] bg-white border-2 border-gray-200 shadow-md top-0 lg:w-1/3 pr-0 overflow-y-hidden">
+
+            <img src="/img/x.webp" id="close-import-user-dropdown" alt="exit" class="relative w-6 rounded-full top-2 -left-1 opacity-70 hover:bg-blue-200">
+
+            <div class="font-[sans-serif] max-w-md py-5 pt-8 pb-2 border-b-2 border-gray-200 mr-4">
+              <form id="import-user-form">
+
+                <label class="block mb-2 text-sm font-semibold text-gray-500">Upload CSV file</label>
+                <input type="file" name="userFile" accept=".csv" class="w-full text-sm font-semibold text-gray-400 bg-white border border-gray-300 rounded cursor-pointer file:cursor-pointer file:border-0 file:py-3 file:px-4 file:mr-4 file:bg-gray-100 file:hover:bg-gray-200 file:text-gray-500" />
+                <p class="mt-2 text-xs text-gray-400">Only CSV files are allowed.</p>
+
+                <div class="relative">
+                  <div id="info-icon-upload" class="flex items-center w-fit">
+                    <span class="relative inline-block -top-[2px]">
+                      <svg class="inline w-4 h-4 text-gray-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap=" round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"></path>
+                      </svg>
+                    </span>
+                    <label class="block ml-1 text-sm font-medium text-gray-700">Upload File Requirements</label>
+                  </div>
+                  <div class="absolute z-50 hidden p-3 mt-1 text-sm text-white bg-gray-800 rounded-lg shadow-lg max-w-56 tooltip" id="tooltip-upload-requirements">
+                    <p class="mb-2">Please ensure the uploaded CSV file follows these requirements:</p>
+                    <p class="mb-2 text-xs text-yellow-300">⚠️ Important: Field names must match exactly (including capitalization and spaces)</p>
+                    <p class="mb-2">Required fields:</p>
+                    <ul class="pl-4 mt-2 list-disc">
+                      <li>ID NUMBER</li>
+                      <li>LAST NAME</li>
+                      <li>FIRST NAME</li>
+                      <li>MIDDLE NAME</li>
+                      <li>COURSE</li>
+                      <li>YEAR</li>
+                      <li>SECTION</li>
+                      <li>PASSWORD</li>
+                      <li>EMAIL</li>
+                    </ul>
+                    <!-- <p class="mt-2 text-xs text-gray-300">Note: All fields are required. The import will fail if any field is missing or incorrectly formatted.</p> -->
+                  </div>
+                  </span>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                  <button type="submit" class="flex items-center px-6 py-2 mb-4 space-x-2 text-sm font-semibold text-white transition-all duration-200 ease-in-out bg-blue-500 rounded-full shadow-md hover:bg-blue-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    <span>Import</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div id="import-records" class="h-full max-h-[calc(100vh-363px)] py-4 mr-0 overflow-y-auto pl-2">
+
+              <div class="px-3 py-1 my-2 text-sm font-medium text-blue-800 bg-blue-100 border-2 rounded-md w-fit">
+                Import records
+              </div>
+
+              <% import_records.forEach(record => { %>
+
+              <div class="relative p-2 pl-3 overflow-visible text-sm border-l-2 border-gray-300">
+
+                <div class="absolute w-3 h-3 transform -translate-y-1/2 border-2 border-gray-300 rounded-full -left-[7px] bg-white top-1/2"></div>
+
+                <div id="import-record" class="p-4 pb-1 transition-colors border border-gray-300 rounded-md hover:bg-blue-50">
+
+                  <div class="py-1 text-right min-h-5">
+                    <input type="hidden" name="importId" value="<%= record.id %>">
+                    <% if (record.status && record.status !== 'Failed') { %>
+                    <div class="flex items-center font-medium text-green-600 record-status">
+                      <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm4.29 7.29l-5 5a1 1 0 01-1.42 0l-2-2a1 1 0 011.42-1.42L10 10.59l4.29-4.29a1 1 0 011.42 1.42z" />
+                      </svg>
+                      <span>
+                        <%= record.status %>
+                      </span>
+                    </div>
+                    <% } else { %>
+                    <div class="flex items-center font-medium text-red-600 record-status">
+                      <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 14H9v-2h2v2zm0-4H9V6h2v4z" />
+                      </svg>
+                      <span>
+                        <%= 'Failed' %>
+                      </span>
+                    </div>
+                    <% } %>
+                  </div>
+
+
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold">Number of users: <span class="inline text-blue-600"> <%= record.import_size %> </span></span>
+                  </div>
+
+                  <div>
+                    <div class=" min-h-5">
+                      <% if (record.time_taken) { %>
+                      <span>Time taken: <p class="inline-block"> <%= record.time_taken %> </p></span>
+                      <% } else { %>
+
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <div class="pt-2 pb-1 text-xs text-right text-gray-500">
+                    <%= new Date(record.import_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %> at <%= new Date(record.import_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                  </div>
+
+                </div>
+              </div>
+              <% }) %>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="w-full p-2 overflow-y-auto lg:w-1/2">
+        <form data-method="POST" id="user-form" class="flex flex-col w-full gap-2 px-4 overflow-y-auto lg:flex-row lg:flex-wrap">
+          <h3 class="w-full pb-6 mb-4 text-2xl font-bold text-blue-600 lg:text-3xl">
+            Add New User
+          </h3>
+
+          <div class="grid pb-1 lg:w-[49%]">
+            <label for="id-number" class="text-sm font-semibold text-gray-500">Id number <span class="text-red-500">*</span></label>
+            <input id="id-number" type="number" class="py-2 pl-2 text-sm font-semibold text-gray-600 border border-gray-300 rounded-sm lg:pl-3 focus:bg-blue-50 focus:outline-blue-500">
+            <div id="id-number-error-message" class="text-sm text-red-500 min-h-5"></div>
+          </div>
+
+          <div class="grid pb-1 lg:w-[49%]">
+            <label for="course" class="text-sm font-semibold text-gray-500">Department <span class="text-red-500">*</span></label>
+            <select id="course" class="py-2 pl-2 text-sm font-semibold text-gray-500 border border-gray-300 rounded-sm lg:pl-3 focus:bg-blue-50 focus:outline-blue-500">
+              <option value="">--</option>
+              <% programs.sort().forEach(program => { %>
+              <option value="<%= program %>" class="text-sm font-medium text-gray-600 hover:bg-blue-600"> <%= program %> </option>
+              <% }) %>
+            </select>
+            <div id="course-error-message" class="text-sm text-red-500 min-h-5"></div>
+          </div>
+
+
+          <div class="grid pb-1 lg:w-[49%]">
+            <label for="firstname" class="text-sm font-semibold text-gray-500">Firstname <span class="text-red-500">*</span></label>
+            <input id="firstname" type="text" class="py-2 pl-2 text-sm font-semibold text-gray-600 border border-gray-300 rounded-sm lg:pl-3 focus:bg-blue-50 focus:outline-blue-500">
+            <div id="firstname-error-message" class="text-sm text-red-500 min-h-5"></div>
+          </div>
+
+          <div class="grid pb-1 lg:w-[49%]">
+            <label for="lastname" class="text-sm font-semibold text-gray-500">Lastname <span class="text-red-500"> *</span></label>
+            <input id="lastname" type="text" class="py-2 pl-2 text-sm font-semibold text-gray-600 border border-gray-300 rounded-sm lg:pl-3 focus:bg-blue-50 focus:outline-blue-500">
+            <div id="lastname-error-message" class="text-sm text-red-500 min-h-5"></div>
+          </div>
+
+          <div id="user-roles" class="w-full py-2 pl-4">
+            <h3 class="mb-4 text-gray-500">Roles</h3>
+            <div>
+
+              <label class="inline-flex items-center cursor-pointer">
+                <input id="admin" type="checkbox" value="admin" class="sr-only peer">
+                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                <span class="text-sm font-medium text-gray-700 ms-3">Admin</span>
+              </label>
+
+            </div>
+            <div>
+
+              <label class="inline-flex items-center cursor-pointer">
+                <input id="program-head" type="checkbox" value="program_head" class="sr-only peer">
+                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                <span class="text-sm font-medium text-gray-700 ms-3">Program head</span>
+              </label>
+
+            </div>
+            <div>
+
+              <label class="inline-flex items-center cursor-pointer">
+                <input id="voter" type="checkbox" value="voter" class="sr-only peer">
+                <div class=" relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                <span class="text-sm font-medium text-gray-700 ms-3">Voter</span>
+              </label>
+
+            </div>
+          </div>
+
+          <input id="user-form-submit-button" type="submit" value="Save user" class="w-full py-2 font-medium text-center text-white bg-blue-500 rounded-md hover:bg-blue-600">
+        </form>
+      </div>
+
+      <div id="user-info" class="relative w-1/2 p-2 overflow-y-auto lg:pl-14 lg:px-6 lg:pt-5 lg:h-full">
+
+      </div>
+    </div>
+
+    <!-- Import user progress modal -->
+    <div id="import-progress-modal" popover class="relative w-full max-w-md p-6 bg-white shadow-2xl rounded-xl sm:p-8">
+      <button id="close-modal" class="absolute p-1 text-gray-400 transition-colors duration-200 rounded-full top-3 right-3 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Close modal">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <h2 class="mb-6 text-2xl font-bold text-gray-800">Import Progress</h2>
+
+      <div class="mb-6">
+        <div class="flex justify-between mb-2">
+          <span class="text-sm font-medium text-gray-600">Progress</span>
+          <span class="text-sm font-medium text-blue-600"></span>
+        </div>
+        <div class="h-4 overflow-hidden bg-gray-200 rounded-full">
+          <div id="progress-fill" class="h-full transition-all duration-300 bg-blue-600 rounded-full"></div>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-lg font-semibold text-gray-700">Importing users...</span>
+          <span id="percentage" class="text-lg font-bold text-blue-600"></span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Imported: <span id="success-count" class="font-semibold"></span></span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const tooltip = document.getElementById('tooltip-upload-requirements');
+    const infoIcon = document.getElementById('info-icon-upload');
+
+    infoIcon.addEventListener('mouseenter', function() {
+      tooltip.classList.remove('hidden');
+    });
+
+    infoIcon.addEventListener('mouseleave', function() {
+      tooltip.classList.add('hidden');
+    });
+  </script>
+
+</body>
+
+</html>

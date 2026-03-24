@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= election ? election.election_name : "Official Ballot" %></title>
+
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/javascript/lib/sweetalert2@11.js"></script>
+  <script src="/javascript/lib/socket.io.min.js" defer></script>
+  <script src="/javascript/helper/sweetAlertFunctions.js"></script>
+  <script src="/javascript/helper/loader.js"></script>
+  <script type="module" src="/javascript/voter/voteBallot.js" defer></script>
+
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .progress-bar-animation {
+      transition: width 1s ease-out;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* Glassmorphism effects */
+    .glass-effect {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Custom radio button styling */
+    .custom-radio {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      display: inline-block;
+      position: relative;
+      background-color: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .custom-radio:checked {
+      background-color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    .custom-radio:checked::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #2563eb;
+    }
+
+    /* Custom checkbox styling */
+    .custom-checkbox {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      display: inline-block;
+      position: relative;
+      background-color: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .custom-checkbox:checked {
+      background-color: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .custom-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 45%;
+      transform: translate(-50%, -50%) rotate(45deg);
+      width: 5px;
+      height: 10px;
+      border-right: 2px solid white;
+      border-bottom: 2px solid white;
+    }
+
+    /* Candidate card hover effect */
+    .candidate-card {
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .candidate-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      border-color: #e5e7eb;
+    }
+
+    /* Selected candidate card */
+    .candidate-selected {
+      border-color: #2563eb !important;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    /* Candidate image styling */
+    .candidate-image {
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .candidate-image:hover {
+      transform: scale(1.05);
+    }
+
+    .image-placeholder {
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    }
+
+    /* Image fallback styling */
+    .candidate-image-container img.hidden {
+      display: none;
+    }
+
+    .candidate-initials.hidden {
+      display: none;
+    }
+
+    /* Selection badge */
+    .selection-badge {
+      transition: all 0.2s ease;
+      transform: scale(0);
+    }
+
+    .selection-badge.show {
+      transform: scale(1);
+    }
+
+    /* Progress indicator */
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+
+    /* Position tab styling - FIXED SIDE BY SIDE NO MOVEMENT */
+    .position-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      color: #64748b;
+      background-color: transparent;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      min-width: fit-content;
+    }
+
+    .position-tab:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+      color: #475569;
+    }
+
+    .position-tab.active {
+      background-color: white;
+      color: #2563eb;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      border-color: #e2e8f0;
+      margin: 0px;
+    }
+
+    .position-tab.active .position-count {
+      background-color: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    /* Error state for position tabs */
+    .position-tab.has-error {
+      border-color: #ef4444;
+      color: #ef4444;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    .position-tab.has-error .position-count {
+      background-color: #fee2e2;
+      color: #ef4444;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-4px);
+      }
+
+      75% {
+        transform: translateX(4px);
+      }
+    }
+
+    /* Position tabs container - FIXED LAYOUT NO MOVEMENT */
+    .position-tabs-container {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      background-color: #f1f5f9;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      min-height: fit-content;
+      width: 100%;
+    }
+
+    .position-tabs-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Position count badge */
+    .position-count {
+      background-color: #e2e8f0;
+      color: #64748b;
+      padding: 0.1rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      min-width: 1.5rem;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Navigation buttons styling - Minimal */
+    .nav-button {
+      transition: all 0.2s ease;
+    }
+
+    .nav-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .nav-button:disabled:hover {
+      color: inherit;
+    }
+
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Ensure main content has bottom padding for footer */
+    .main-content {
+      padding-bottom: 2rem;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen font-sans bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full shadow-lg bg-white/80 backdrop-blur-md">
+    <div class="bg-gradient-to-r from-blue-800 via-blue-700 to-blue-800">
+      <div class="px-4 mx-auto max-w-7xl">
+        <div class="flex items-center justify-between h-16">
+          <!-- Left side with back button and election name -->
+          <div class="flex items-center space-x-4">
+            <a href="/election" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-300 rounded-lg shadow-sm bg-blue-700/50 hover:bg-blue-600 hover:shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span class="hidden sm:inline">Back to Elections</span>
+            </a>
+
+            <div>
+              <h1 class="text-lg font-bold text-white">
+                <span class="hidden sm:inline">Official Ballot</span>
+                <span class="sm:hidden">Ballot</span>
+              </h1>
+              <p class="text-sm text-blue-200 -mt-0.5 truncate max-w-[200px] sm:max-w-xs">
+                <%= election ? election.election_name : "Election" %>
+              </p>
+            </div>
+          </div>
+
+          <!-- Right side with user info -->
+          <div class="flex items-center space-x-3">
+            <div class="items-center hidden gap-3 md:flex">
+              <div class="text-right">
+                <div class="font-medium text-white"><%= user ? `${user.firstname} ${user.lastname}` : "Voter" %></div>
+                <div class="text-xs text-blue-100"><%= user ? user.course : "" %></div>
+              </div>
+              <div class="flex items-center justify-center w-10 h-10 font-bold text-white bg-blue-900 rounded-full">
+                <%= user ? user.firstname.charAt(0) + user.lastname.charAt(0) : "V" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="h-1 bg-blue-900">
+      <div id="progress-bar" class="h-full bg-yellow-400 progress-bar" style="width: 0%"></div>
+    </div>
+
+    <!-- Election info bar -->
+    <div class="w-full py-3 border-b shadow-sm bg-white/90 border-slate-200">
+      <div class="px-4 mx-auto max-w-7xl">
+        <div class="flex flex-wrap items-center justify-between gap-y-2">
+          <div class="flex flex-wrap items-center gap-4 text-sm">
+            <div class="flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+              <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Cast Your Vote</span>
+            </div>
+
+            <% if (candidatePositionList && candidatePositionList.length > 0) { %>
+            <div class="flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+              <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span><%= candidatePositionList.length %> Positions</span>
+            </div>
+            <% } %>
+          </div>
+
+          <!-- Voting progress summary -->
+          <div class="flex items-center gap-2 text-sm">
+            <div class="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200">
+              <span class="font-medium">Progress:</span>
+              <span class="font-bold text-blue-700" id="voting-progress">0 / <%= candidatePositionList ? candidatePositionList.length : 0 %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl px-4 py-8 mx-auto main-content">
+    <!-- Ballot header -->
+    <div class="mb-6 text-center">
+      <div class="inline-flex items-center gap-2 px-4 py-2 mb-2 text-blue-700 bg-blue-100 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-xs font-medium">Official Ballot</span>
+      </div>
+      <h1 class="text-xl font-bold text-slate-800 md:text-2xl">
+        <%= election ? election.election_name : "Official Ballot" %>
+      </h1>
+      <p class="text-base text-slate-600">
+        Select your preferred candidates for each position
+      </p>
+    </div>
+
+    <% if (shuffledCandidateList && shuffledCandidateList.length <= 0) { %>
+    <!-- No candidates state -->
+    <div class="p-12 text-center bg-white shadow-lg rounded-xl">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h2 class="mb-3 text-2xl font-semibold text-slate-800">No Candidates Available</h2>
+      <p class="max-w-md mx-auto text-slate-600">There are currently no candidates to display for this election. Please check back later or contact the election administrator.</p>
+    </div>
+    <% } else { %>
+
+    <form id="ballot-form" class="space-y-8">
+      <% if (candidatePositionList && candidatePositionList.length > 0) { %>
+      <!-- Positions with candidates -->
+      <div class="space-y-8">
+        <% candidatePositionList.forEach((position, posIndex) => { %>
+        <% 
+          let candidatePerPosition;
+          if (position === 'SENATOR') {
+            candidatePerPosition = shuffledCandidateList.filter(candidate => 
+              candidate.position === position && candidate.department_name.toUpperCase().trim() === user.department_name.toUpperCase().trim()
+            );
+          } else {
+            candidatePerPosition = shuffledCandidateList.filter(candidate => 
+              candidate.position === position
+            );
+          }
+        %>
+
+        <% if (candidatePerPosition.length > 0) { %>
+        <section id="<%= position.replace(/\s+/g, '-').toLowerCase() %>" class="overflow-hidden bg-white border rounded-md shadow-sm border-slate-200" <%= position === 'SENATOR' ? `data-max-vote=${departmentMaxSenatorVote[user.course]}` : '' %>>
+
+          <!-- Position header -->
+          <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700">
+            <div class="flex items-center">
+              <div class="flex items-center justify-center w-12 h-12 mr-4 text-blue-700 bg-blue-100 rounded-lg">
+                <% if (position === 'PRESIDENT') { %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                <% } else if (position === 'VICE PRESIDENT') { %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <% } else if (position === 'SENATOR') { %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <% } else { %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <% } %>
+              </div>
+              <div class="text-left">
+                <h2 id="position-label" class="text-xl font-bold text-white"><%= position %></h2>
+                <p class="text-sm text-blue-100">
+                  <% if (position === 'SENATOR') { %>
+                  Select up to <span class="font-semibold"><%= departmentMaxSenatorVote[user.department_name] %></span>
+                  <%= departmentMaxSenatorVote[user.course] > 1 ? 'candidates' : 'candidate' %>
+                  <% } else { %>
+                  Select <span class="font-semibold">1</span> candidate
+                  <% } %>
+                  • <span class="font-medium"><%= candidatePerPosition.length %></span> available
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="text-sm font-medium text-white selection-status" id="status-<%= position %>">
+                No selection made
+              </div>
+            </div>
+          </div>
+
+          <!-- Candidates container -->
+          <div class="p-4 bg-white">
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <% candidatePerPosition.forEach((candidate, candidateIndex) => { %>
+              <div class="overflow-hidden transition-all duration-300 bg-white border rounded-lg shadow-sm candidate-card border-slate-200 hover:shadow-xl">
+                <div class="p-6">
+                  <div class="flex flex-col items-center space-y-4">
+                    <!-- Candidate Image with fallback -->
+                    <div class="relative">
+                      <div class="w-24 h-24 overflow-hidden rounded-full border-3 border-slate-200 candidate-image-container">
+                        <% if (candidate.candidate_profile) { %>
+                        <img src="/img/candidate_profiles/<%= candidate.candidate_profile %>" alt="<%= candidate.firstname %> <%= candidate.lastname %>" class="object-cover w-full h-full candidate-image" onerror="handleImageError(this, '<%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>')">
+                        <div class="flex items-center justify-center hidden w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 image-placeholder candidate-initials">
+                          <div class="text-center">
+                            <div class="mb-1 text-2xl font-bold text-blue-600">
+                              <%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>
+                            </div>
+                          </div>
+                        </div>
+                        <% } else { %>
+                        <div class="flex items-center justify-center w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 image-placeholder">
+                          <div class="text-center">
+                            <div class="mb-1 text-2xl font-bold text-blue-600">
+                              <%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>
+                            </div>
+                          </div>
+                        </div>
+                        <% } %>
+                      </div>
+                      <!-- Selection badge -->
+                      <div class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -top-2 -right-2 selection-badge" id="badge-<%= candidate.id_number %>">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <!-- Candidate Info -->
+                    <div class="flex-grow text-center">
+                      <label for="<%= candidate.alias %><%= candidate.id_number %>" class="block cursor-pointer">
+                        <h3 class="mb-2 text-lg font-semibold leading-tight text-slate-800" id="candidate-<%= candidate.id_number %>-name">
+                          <%= candidate.firstname %> <%= candidate.lastname %>
+                          <% if (candidate.alias) { %>
+                          <span class="block text-sm font-normal text-slate-500">(<%= candidate.alias %>)</span>
+                          <% } %>
+                        </h3>
+
+                        <div class="mb-4">
+                          <span class="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-800 bg-blue-100 rounded-full">
+                            <%= candidate.party %>
+                          </span>
+                        </div>
+
+                        <!-- Selection Input -->
+                        <div class="flex justify-center">
+                          <% if (position === 'SENATOR') { %>
+                          <input name="<%= position %>" type="checkbox" value="<%= candidate.id_number %>" id="<%= candidate.alias %><%= candidate.id_number %>" class="w-6 h-6 custom-checkbox" aria-labelledby="candidate-<%= candidate.id_number %>-name" onchange="handleCandidateSelection(this, '<%= position %>')">
+                          <% } else { %>
+                          <input name="<%= position %>" type="radio" value="<%= candidate.id_number %>" id="<%= candidate.alias %><%= candidate.id_number %>" class="w-6 h-6 custom-radio" aria-labelledby="candidate-<%= candidate.id_number %>-name" onchange="handleCandidateSelection(this, '<%= position %>')">
+                          <% } %>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <% }) %>
+            </div>
+
+            <!-- Error message area -->
+            <div class="mt-2">
+              <div class="text-sm font-medium text-red-600 min-h-4 error-message" id="error-<%= position %>"></div>
+            </div>
+          </div>
+        </section>
+        <% } %>
+        <% }) %>
+
+        <!-- Submit ballot section -->
+        <div class="overflow-hidden bg-white border-2 border-green-300 rounded-lg shadow-smborder">
+
+          <!-- Submit ballot content -->
+          <div class="p-4 bg-white ">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div class="flex items-center gap-4">
+                <div class="flex items-center justify-center flex-shrink-0 w-12 h-12 bg-green-100 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="mb-2 text-lg font-semibold text-slate-800">Ready to submit your ballot?</h3>
+                  <p class="text-sm text-slate-600">Please review your selections before submitting. Once submitted, your vote cannot be changed.</p>
+                  <div class="mt-3 text-sm text-slate-400" id="selection-summary">
+                    No selections made yet
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex gap-3 lg:flex-col xl:flex-row">
+                <button type="reset" class="px-6 py-3 text-sm font-medium transition-all duration-200 bg-white border-2 rounded-lg text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
+                  Clear All Selections
+                </button>
+
+                <button type="submit" class="flex items-center gap-3 px-8 py-3 font-medium text-white transition-all duration-200 transform rounded-lg shadow-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 hover:shadow-xl hover:scale-105">
+                  <span>Submit Ballot</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </form>
+    <% } %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full mt-8 bg-white border-t shadow-sm border-slate-200">
+    <div class="max-w-6xl px-4 py-4 mx-auto ">
+      <div class="space-y-1 text-sm text-center text-slate-500">
+        <p class="font-medium">© <%= new Date().getFullYear() %> BCC Web-based E-voting System. All rights reserved.</p>
+        <p>If you encounter any issues, please contact the election administrator.</p>
+        <div class="flex items-center justify-center gap-2 mt-2 text-xs text-slate-400">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>Secure • Encrypted • Anonymous</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Image error handling function
+    function handleImageError(img, initials) {
+      // Hide the failed image
+      img.classList.add('hidden');
+
+      // Show the initials fallback
+      const initialsDiv = img.nextElementSibling;
+      if (initialsDiv && initialsDiv.classList.contains('candidate-initials')) {
+        initialsDiv.classList.remove('hidden');
+      }
+    }
+
+    // Global state management
+    let selectedCandidates = {};
+    let totalPositions = <%= candidatePositionList ? candidatePositionList.length : 0 %>;
+
+
+    function handleCandidateSelection(input, position) {
+      const candidateId = input.value;
+      const isChecked = input.checked;
+
+      // Initialize position in selectedCandidates if not exists
+      if (!selectedCandidates[position]) {
+        selectedCandidates[position] = [];
+      }
+
+      if (input.type === 'radio') {
+        // For radio buttons, clear all previous selections for this position
+        selectedCandidates[position] = isChecked ? [candidateId] : [];
+
+        // Update all radio buttons in this position
+        const allRadios = document.querySelectorAll(`input[name="${position}"]`);
+        allRadios.forEach(radio => {
+          updateCandidateCard(radio, radio.checked);
+        });
+      } else if (input.type === 'checkbox') {
+        // For checkboxes, handle multiple selections with limits
+        const section = input.closest('section[data-max-vote]');
+        const maxVotes = section ? parseInt(section.getAttribute('data-max-vote')) : 1;
+
+        if (isChecked) {
+          if (selectedCandidates[position].length >= maxVotes) {
+            // Prevent selection if limit reached
+            input.checked = false;
+            showError(position, `You can only select up to ${maxVotes} candidate${maxVotes > 1 ? 's' : ''}.`);
+            return;
+          }
+          selectedCandidates[position].push(candidateId);
+        } else {
+          selectedCandidates[position] = selectedCandidates[position].filter(id => id !== candidateId);
+        }
+
+        updateCandidateCard(input, isChecked);
+      }
+
+      updatePositionStatus(position);
+      updateProgressBar();
+      updateSelectionSummary();
+    }
+
+    function updateCandidateCard(input, isSelected) {
+      const card = input.closest('.candidate-card');
+      const badge = document.getElementById(`badge-${input.value}`);
+
+      if (card) {
+        if (isSelected) {
+          card.classList.add('candidate-selected');
+          if (badge) badge.classList.add('show');
+        } else {
+          card.classList.remove('candidate-selected');
+          if (badge) badge.classList.remove('show');
+        }
+      }
+    }
+
+    function updatePositionStatus(position) {
+      const statusElement = document.getElementById(`status-${position}`);
+      const selectedCount = selectedCandidates[position] ? selectedCandidates[position].length : 0;
+
+      if (statusElement) {
+        if (selectedCount === 0) {
+          statusElement.textContent = 'No selection made';
+          statusElement.className = 'selection-status text-white text-sm font-medium';
+        } else {
+          statusElement.textContent = `${selectedCount} selected`;
+          statusElement.className = 'selection-status text-yellow-300 text-sm font-bold';
+        }
+      }
+    }
+
+    function updateProgressBar() {
+      const completedPositions = Object.values(selectedCandidates).filter(selections => selections.length > 0).length;
+      const progress = totalPositions > 0 ? (completedPositions / totalPositions) * 100 : 0;
+
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('voting-progress');
+
+      if (progressBar) {
+        progressBar.style.width = `${progress}%`;
+      }
+
+      if (progressText) {
+        progressText.textContent = `${completedPositions} / ${totalPositions}`;
+      }
+    }
+
+    function updateSelectionSummary() {
+      const summaryElement = document.getElementById('selection-summary');
+      const totalSelections = Object.values(selectedCandidates).reduce((sum, selections) => sum + selections.length, 0);
+
+      if (summaryElement) {
+        if (totalSelections === 0) {
+          summaryElement.textContent = 'No selections made yet';
+        } else {
+          const positionCount = Object.values(selectedCandidates).filter(selections => selections.length > 0).length;
+          summaryElement.textContent = `${totalSelections} candidate${totalSelections > 1 ? 's' : ''} selected across ${positionCount} position${positionCount > 1 ? 's' : ''}`;
+        }
+      }
+    }
+
+    function showError(position, message) {
+      const errorElement = document.getElementById(`error-${position}`);
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.classList.add('animate-pulse');
+        setTimeout(() => {
+          errorElement.textContent = '';
+          errorElement.classList.remove('animate-pulse');
+        }, 4000);
+      }
+    }
+  </script>
+</body>
+
+</html>

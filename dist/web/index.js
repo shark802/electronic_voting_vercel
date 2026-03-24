@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const generalAccess_1 = __importDefault(require("./routes/generalAccess"));
+const admin_1 = __importDefault(require("./routes/admin"));
+const voter_1 = __importDefault(require("./routes/voter"));
+const programHead_1 = __importDefault(require("./routes/programHead"));
+const reports_1 = __importDefault(require("./routes/reports"));
+const faceRecognition_1 = __importDefault(require("./routes/faceRecognition"));
+const router = (0, express_1.Router)();
+router.use(generalAccess_1.default);
+router.use("/admin", admin_1.default);
+router.use('/report', reports_1.default);
+router.use('/program-head', programHead_1.default);
+router.use(voter_1.default);
+router.use(faceRecognition_1.default);
+exports.default = router;

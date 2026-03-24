@@ -1,0 +1,503 @@
+  <!DOCTYPE html>
+  <html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Homepage</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="/javascript\lib\sweetalert2@11.js" defer></script>
+    <script src="/javascript\lib\jquery-3.7.1.min.js"></script>
+    <script src="/javascript/lib/socket.io.min.js" defer></script>
+    <script type="module" src="/javascript/voter/election_page.js" defer></script>
+
+    <style>
+      /* main {
+        background-image: url('/img/image.png');
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+      } */
+    </style>
+  </head>
+
+  <body class="relative w-full h-screen min-h-screen overflow-hidden bg-gradient-to-b from from-blue-50 to-blue-100">
+    <header class="flex items-center justify-between w-full px-4 py-3 shadow-md bg-gradient-to-r from-blue-800 to-blue-600">
+      <a href="/" class="flex items-center gap-2 px-3 py-2 text-white transition-colors duration-200 bg-blue-600 rounded-full shadow-md hover:text-blue-200 hover:bg-blue-700">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span class="text-xs font-medium lg:text-sm">Home</span>
+      </a>
+
+      <% if (user) { %>
+      <div id="profile-container" class="relative">
+        <button id="profile-info" class="flex items-center gap-3 text-white transition-colors duration-200 hover:text-blue-200">
+          <span class="text-xs font-medium lg:text-sm"><%= user.firstname %> <%= user.lastname %></span>
+          <img src="/img/account.webp" alt="profile" class="w-8 h-8 border-2 border-white rounded-full">
+        </button>
+
+        <div id="account-section" class="absolute right-0 z-10 hidden mt-4 overflow-hidden bg-white border border-blue-100 rounded-lg shadow-xl w-72">
+          <div class="p-4 lg:p-6 bg-blue-50">
+            <div class="flex items-center mb-4">
+              <img src="/img/account.webp" alt="profile" class="w-16 h-16 mr-4 border-2 border-blue-300 rounded-full">
+              <div>
+                <p class="font-bold text-blue-800 lg:text-lg"><%= user.firstname %> <%= user.lastname %></p>
+                <p class="text-sm text-blue-600"><%= user.course %>-<%= user.year_level %><%= user.section %></p>
+              </div>
+            </div>
+            <p class="inline-block px-3 py-1 text-sm text-gray-600 bg-white rounded-full">ID: <%= user.id_number %></p>
+          </div>
+
+          <div class="p-4 border-t border-blue-100">
+
+            <!-- <div id="register-face-button-container" class="hidden">
+              <% if (face_registered) { %>
+
+              <button class="flex items-center justify-center w-full py-2 mb-3 text-sm font-medium text-white transition-colors duration-200 bg-green-600 rounded-md cursor-default hover:bg-green-700">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <p>Face Registered</p>
+              </button>
+
+              <% } else { %>
+              <button id="register-face-button" class="flex items-center justify-center w-full py-2 mb-3 text-sm font-medium text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p>Register Face</p>
+              </button>
+              <% } %>
+            </div> -->
+
+            <!-- <button id="register-face-button" class="flex items-center justify-center w-full py-2 mb-3 text-sm font-medium text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p>Register Face</p>
+            </button> -->
+
+            <button id="logout-button" class="flex items-center justify-center w-full py-2 text-xs font-medium text-gray-700 transition-colors duration-200 bg-gray-100 rounded-md lg:text-sm hover:bg-gray-200">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+              Logout
+            </button>
+
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </header>
+
+    <main class="flex flex-col px-4 items-center justify-center overflow-y-auto lg:mb-0 h-[calc(100%-60px)] lg:mx-0 pb-24 no-scrollbar">
+
+
+      <% if (electionList.length < 1) { %>
+
+      <section class="max-w-2xl mx-auto overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg">
+        <div class="p-4 text-center lg:p-10">
+          <div class="relative mb-2 lg:mb-6">
+            <img src="/img/empty-folder.webp" alt="Empty folder" class="w-16 h-16 mx-auto transition-transform duration-300 opacity-75 lg:w-24 lg:h-24 hover:scale-110">
+            <div class="absolute inset-0 bg-blue-500 rounded-full opacity-10 blur-2xl"></div>
+          </div>
+          <h2 class="mb-2 text-lg font-bold text-gray-800 lg:text-2xl">No Elections Scheduled</h2>
+          <p class="text-gray-600 lg:mb-8 lg:text-lg">It seems there are no elections scheduled at the moment.</p>
+
+          <div class="p-4 mt-4 border border-blue-200 rounded-lg lg:mt-8 bg-blue-50">
+            <div class="flex items-center">
+              <svg class="w-8 h-8 mr-3 text-blue-500 lg:w-5 lg:h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+              <p class="text-sm font-medium text-blue-800">
+                No elections are currently scheduled. Please check back later for updates.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <% } else { %>
+
+      <!-- Enhanced Carousel Container with vertical centering -->
+      <div class="w-full max-w-[700px] mx-auto relative flex items-center justify-center min-h-[450px] max-h-fit">
+        <!-- Improved Carousel Navigation Arrows -->
+        <% if (electionList.length > 1) { %>
+        <button id="prev-btn" class="absolute left-0 z-20 p-3 transition-all duration-300 -translate-x-5 -translate-y-1/2 bg-white border border-blue-100 rounded-full shadow-lg top-1/2 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:scale-110 lg:-translate-x-8">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <button id="next-btn" class="absolute right-0 z-20 p-3 transition-all duration-300 translate-x-5 -translate-y-1/2 bg-white border border-blue-100 rounded-full shadow-lg top-1/2 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:scale-110 lg:translate-x-8">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+        <% } %>
+
+        <!-- Enhanced Carousel Track with fixed width for single card -->
+        <div id="carousel-container" class="w-full overflow-hidden rounded-xl">
+          <div id="carousel-track" class="flex transition-all duration-500 ease-out">
+            <% electionList.forEach(element => { %>
+            <div class="carousel-item flex-shrink-0 <%= electionList.length === 1 ? 'w-full' : '' %>">
+              <section class="bg-white rounded-lg min-h-fit w-full py-8 px-6 shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 transform <%= electionList.length === 1 ? 'max-w-[700px] mx-auto' : '' %>">
+                <div id="election-id" class="hidden"><%= element.election_id %></div>
+                <input type="hidden" value="<%= element.date_start %>" id="date-start">
+                <input type="hidden" value="<%= element.time_start %>" id="time-start">
+                <input type="hidden" value="<%= element.date_end %>" id="date-end">
+                <input type="hidden" value="<%= element.time_end %>" id="time-end">
+
+                <h2 class="mb-4 text-xl font-bold text-center text-blue-800 lg:mb-5 lg:text-2xl"><%= element.election_name %></h2>
+
+                <% 
+              const formatOptions = {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: 'numeric',
+              }
+              const presentDate = new Date()
+
+              const dateStart = new Date(element.date_start);
+              const [startHour, startMinute] = element.time_start.split(":");
+              dateStart.setHours(startHour, startMinute);
+              const formattedStartDateAndTime = dateStart.toLocaleString('en-US', formatOptions);
+
+              const dateEnd = new Date(element.date_end);
+              const [endHour, endMinute] = element.time_end.split(":");
+              dateEnd.setHours(endHour, endMinute);
+              const formattedEndDateAndTime = dateEnd.toLocaleString('en-US', formatOptions);
+            %>
+
+                <div class="flex flex-col mb-8 text-sm lg:gap-3">
+                  <div class="flex items-center p-3 text-sm text-gray-600 border border-gray-100 rounded-lg bg-gray-50">
+                    <div class="flex items-center min-w-20">
+                      <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      <p class="font-semibold">Start:</p>
+                    </div>
+                    <p id="start" class="font-medium"><%= formattedStartDateAndTime %></p>
+                  </div>
+                  <div class="flex items-center p-3 text-sm text-gray-600 border border-gray-100 rounded-lg bg-gray-50">
+                    <div class="flex items-center min-w-20">
+                      <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p class="font-semibold">End:</p>
+                    </div>
+                    <p id="end" class="font-medium"><%= formattedEndDateAndTime %></p>
+                  </div>
+                </div>
+
+                <% if (presentDate >= dateStart && presentDate <= dateEnd) { %>
+                <div id="election-status-message" class="p-3 mb-3 text-sm font-bold text-center text-blue-700 bg-blue-100 border-l-4 border-blue-500 rounded-lg">
+                  <div class="flex items-center justify-center">
+                    <span class="relative flex w-3 h-3 mr-3">
+                      <span class="absolute inline-flex w-full h-full bg-blue-400 rounded-full opacity-75 animate-ping"></span>
+                      <span class="relative inline-flex w-3 h-3 bg-blue-500 rounded-full"></span>
+                    </span>
+                    <span>The election is now live! Cast your vote to make your voice heard.</span>
+                  </div>
+                </div>
+                <% } else if (presentDate < dateStart) { %>
+                <div id="election-status-message" class="p-3 mb-3 text-sm font-bold text-center text-gray-700 bg-gray-100 border-l-4 border-gray-400 rounded-lg">
+                  <div class="flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>The election is yet to begin. Please check back later for updates.</span>
+                  </div>
+                </div>
+                <% } else if (presentDate > dateEnd) { %>
+                <div id="election-status-message" class="p-3 mb-3 text-sm font-bold text-center text-green-700 bg-green-100 border-l-4 border-green-500 rounded-lg">
+                  <div class="flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>The election has ended. You can now view the results.</span>
+                  </div>
+                </div>
+                <% } %>
+
+                <% if (presentDate >= dateStart && presentDate <= dateEnd) { %>
+                <button id="vote-now-button" class="w-full py-4 text-sm font-semibold text-white transition-all duration-300 transform bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:scale-105">
+                  <svg class="inline w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                  </svg>
+                  Vote Now
+                </button>
+                <% } else if (presentDate < dateStart) { %>
+                <button id="vote-now-button" class="w-full py-4 text-sm font-semibold text-gray-500 transition-colors duration-200 bg-gray-200 border border-gray-300 rounded-lg cursor-not-allowed">
+                  <svg class="inline w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                  </svg>
+                  Vote Now
+                </button>
+                <% } else if (presentDate > dateEnd) { %>
+                <button id="vote-now-button" class="w-full py-4 text-sm font-semibold text-white transition-all duration-300 transform bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hover:scale-105">
+                  <svg class="inline w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                  View Result
+                </button>
+                <% } %>
+              </section>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Election Name Shortcuts Navigation -->
+        <% if (electionList.length > 1) { %>
+        <div class="w-full absolute bottom-[-50px] no-scrollbar">
+          <h3 class="mb-2 text-sm font-medium text-gray-700">Quick Navigation:</h3>
+          <div class="relative px-3 election-shortcuts-container">
+            <div class="absolute top-0 bottom-0 left-0 z-10 w-8 pointer-events-none bg-gradient-to-r from-blue-100 to-transparent"></div>
+            <div class="px-2 pb-2 -mx-2 overflow-auto election-shortcuts-scroll scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent no-scrollbar">
+              <div class="flex space-x-2 election-shortcuts-wrapper min-w-max no-scrollbar">
+                <% electionList.forEach((element, index) => { %>
+                <button class="election-shortcut-btn text-sm px-3 py-2 rounded-md border-2 transition-all duration-200 whitespace-nowrap <%= index === 0 ? 'bg-white border-blue-500 text-blue-800 font-medium' : 'border-blue-200 bg-blue-100 text-gray-700 hover:bg-blue-100' %>" data-index="<%= index %>">
+                  <%= element.election_name %>
+                </button>
+                <% }) %>
+              </div>
+            </div>
+            <div class="absolute top-0 bottom-0 right-0 z-10 w-8 pointer-events-none bg-gradient-to-l from-blue-100 to-transparent"></div>
+          </div>
+        </div>
+
+        <!-- Small Dot Indicators (Optional, can be removed if not needed) -->
+        <div class="flex justify-center space-x-2 absolute bottom-[-65px]">
+          <% for(let i = 0; i < electionList.length; i++) { %>
+          <button class="carousel-indicator w-2 h-2 rounded-full bg-gray-300 hover:bg-blue-400 focus:outline-none transition-all duration-300 <%= i === 0 ? 'bg-blue-500' : '' %>" data-index="<%= i %>"></button>
+          <% } %>
+        </div>
+        <% } %>
+      </div>
+
+      <% } %>
+
+    </main>
+
+    <!-- Enhanced Carousel JavaScript -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const carouselTrack = document.getElementById('carousel-track');
+        const carouselItems = document.querySelectorAll('.carousel-item');
+        const indicators = document.querySelectorAll('.carousel-indicator');
+        const shortcutButtons = document.querySelectorAll('.election-shortcut-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        if (!carouselTrack) return;
+
+        let currentIndex = 0;
+        const itemCount = carouselItems.length;
+
+        // Set initial width for items
+        function setItemWidth() {
+          const containerWidth = document.getElementById('carousel-container').offsetWidth;
+
+          // For single item, ensure it takes full width
+          if (itemCount === 1) {
+            carouselItems[0].style.width = `${containerWidth}px`;
+            return;
+          }
+
+          carouselItems.forEach(item => {
+            item.style.width = `${containerWidth}px`;
+          });
+
+          // Update track position for current slide
+          updateTrackPosition();
+        }
+
+        // Update the track position based on current index
+        function updateTrackPosition() {
+          // If there's only one item, no need to update position
+          if (itemCount <= 1) return;
+
+          const containerWidth = document.getElementById('carousel-container').offsetWidth;
+          carouselTrack.style.transform = `translateX(-${currentIndex * containerWidth}px)`;
+
+          // Update indicators
+          indicators.forEach((indicator, index) => {
+            if (index === currentIndex) {
+              indicator.classList.add('bg-blue-500');
+              indicator.classList.remove('bg-gray-300');
+            } else {
+              indicator.classList.remove('bg-blue-500');
+              indicator.classList.add('bg-gray-300');
+            }
+          });
+
+          // Update shortcut buttons
+          shortcutButtons.forEach((btn, index) => {
+            if (index === currentIndex) {
+              btn.classList.add('bg-white', 'border-blue-500', 'text-blue-800', 'font-medium');
+              btn.classList.remove('bg-blue-50', 'border-blue-200', 'text-gray-700');
+
+              // Scroll the active button into view with a smooth animation
+              setTimeout(() => {
+                btn.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'nearest',
+                  inline: 'center'
+                });
+              }, 100);
+            } else {
+              btn.classList.remove('bg-white', 'border-blue-500', 'text-blue-800', 'font-medium');
+              btn.classList.add('bg-blue-50', 'border-blue-200', 'text-gray-700');
+            }
+          });
+        }
+
+        // Initialize carousel
+        setItemWidth();
+
+        // Handle window resize
+        window.addEventListener('resize', setItemWidth);
+
+        // Only set up navigation if there are multiple items
+        if (itemCount > 1) {
+          // Previous button click
+          if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+              // Add a quick scale effect to the button
+              this.classList.add('scale-90');
+              setTimeout(() => {
+                this.classList.remove('scale-90');
+              }, 200);
+
+              currentIndex = (currentIndex - 1 + itemCount) % itemCount;
+              updateTrackPosition();
+            });
+          }
+
+          // Next button click
+          if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+              // Add a quick scale effect to the button
+              this.classList.add('scale-90');
+              setTimeout(() => {
+                this.classList.remove('scale-90');
+              }, 200);
+
+              currentIndex = (currentIndex + 1) % itemCount;
+              updateTrackPosition();
+            });
+          }
+
+          // Indicator clicks
+          indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', function() {
+              currentIndex = index;
+              updateTrackPosition();
+            });
+          });
+
+          // Shortcut button clicks
+          shortcutButtons.forEach((btn, index) => {
+            btn.addEventListener('click', function() {
+              currentIndex = index;
+              updateTrackPosition();
+            });
+          });
+
+          // Touch events for swiping
+          let touchStartX = 0;
+          let touchEndX = 0;
+          let isSwiping = false;
+
+          carouselTrack.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            isSwiping = true;
+            // Remove transition during swipe for more responsive feel
+            carouselTrack.style.transition = 'none';
+          }, false);
+
+          carouselTrack.addEventListener('touchmove', function(e) {
+            if (!isSwiping) return;
+
+            const currentTouch = e.changedTouches[0].screenX;
+            const diff = currentTouch - touchStartX;
+            const containerWidth = document.getElementById('carousel-container').offsetWidth;
+
+            // Calculate how far to move during the swipe, with limits
+            const offset = -currentIndex * containerWidth + diff;
+
+            // Apply the transform directly during the swipe
+            carouselTrack.style.transform = `translateX(${offset}px)`;
+          }, false);
+
+          carouselTrack.addEventListener('touchend', function(e) {
+            // Restore the transition for the snap effect
+            carouselTrack.style.transition = 'transform 500ms ease-out';
+
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+            isSwiping = false;
+          }, false);
+
+          function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
+              // Swipe left - next slide
+              currentIndex = (currentIndex + 1) % itemCount;
+              updateTrackPosition();
+            } else if (touchEndX > touchStartX + swipeThreshold) {
+              // Swipe right - previous slide
+              currentIndex = (currentIndex - 1 + itemCount) % itemCount;
+              updateTrackPosition();
+            } else {
+              // Not enough swipe distance, snap back
+              updateTrackPosition();
+            }
+          }
+
+          // Keyboard navigation
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+              currentIndex = (currentIndex - 1 + itemCount) % itemCount;
+              updateTrackPosition();
+            } else if (e.key === 'ArrowRight') {
+              currentIndex = (currentIndex + 1) % itemCount;
+              updateTrackPosition();
+            }
+          });
+        }
+      });
+    </script>
+
+
+    <dialog id="register-face-modal-option" class="w-[95%] m-auto max-w-md px-6 py-6 pt-8 pb-6 rounded-lg shadow-xl">
+      <div>
+        <button id="close-face-register-modal" class="absolute text-gray-500 top-2 right-2 hover:text-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <h2 class="mb-4 text-lg font-bold text-blue-800">Register Face</h2>
+        <p class="mb-2 text-gray-600">Follow these instructions to ensure accurate face registration:</p>
+        <ul class="mb-6 ml-4 text-sm text-gray-600 list-disc">
+          <li>Ensure the room is well-lit with no shadows on your face.</li>
+          <li>Position your face directly in front of the camera, keeping it centered.</li>
+          <li>Remove any accessories like hats or sunglasses that may obscure your face.</li>
+          <li>Maintain a neutral facial expression, avoiding exaggerated emotions.</li>
+          <li>Keep your face at a consistent distance from the camera (approximately 12–18 inches).</li>
+          <li>Avoid bright or uneven backlighting that could distort your facial features.</li>
+          <li>If using a webcam, ensure it is clean and positioned at eye level.</li>
+        </ul>
+
+        <a href="/register-face" class="block mt-2">
+          <button id="realtime-registration" class="w-full py-3 text-sm font-medium text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Register Now</button>
+        </a>
+      </div>
+    </dialog>
+  </body>
+
+  </html>

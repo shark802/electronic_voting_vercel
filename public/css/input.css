@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .confirm-modal {
+        @apply p-4 pt-7 lg:max-w-[600px] w-[90%] min-h-fit pb-20 rounded-md shadow-lg text-center
+    }
+
+    .loader {
+        @apply bg-black opacity-35 absolute flex justify-center items-center top-0 bottom-0 left-0 right-0
+    }
+
+    .tablerow {
+        @apply bg-white rounded-lg my-3 hover:bg-blue-100 border-y-4 border-y-blue-50 transition-all
+    }
+
+    .active {
+        @apply rounded-full w-20 px-4 bg-green-200 text-green-600 py-1 text-[10px] m-auto
+    }
+
+    .inactive {
+        @apply rounded-full w-20 px-4 bg-red-200 text-red-600 py-1 text-[10px] m-auto
+    }
+
+    .selected-position {
+        @apply text-gray-600 text-lg border-blue-400 transition-all border-b-4
+    }
+
+    .center {
+        @apply transform top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+    }
+
+    .button {
+        @apply py-1 px-2 rounded md:m-2 m-1 border border-white border-solid
+    }
+
+    .active-nav {
+        @apply text-blue-700 bg-blue-200 rounded-md
+    }
+
+    .active-page {
+        @apply text-blue-700 font-semibold
+    }
+}

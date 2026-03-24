@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error | Election System</title>
+  <script src="/javascript/lib/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      10%,
+      30%,
+      50%,
+      70%,
+      90% {
+        transform: translateX(-2px);
+      }
+
+      20%,
+      40%,
+      60%,
+      80% {
+        transform: translateX(2px);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    .animate-pulse-slow {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .animate-shake {
+      animation: shake 0.5s ease-in-out;
+    }
+
+    /* Custom scrollbar to match election results */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* Button hover effects */
+    .btn-hover-effect {
+      transition: all 0.3s ease;
+    }
+
+    .btn-hover-effect:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Error icon animation */
+    .error-icon {
+      animation: pulse 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen font-sans bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800">
+  <!-- Header matching election results style -->
+  <header class="sticky top-0 z-50 w-full shadow-lg bg-white/80 backdrop-blur-md">
+    <div class="bg-gradient-to-r from-red-800 via-red-700 to-red-800">
+      <div class="container px-4 mx-auto max-w-7xl">
+        <div class="flex items-center justify-between h-16">
+          <!-- Left side with error indicator -->
+          <div class="flex items-center space-x-4">
+            <div class="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg bg-red-700/50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5 error-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>System Error</span>
+            </div>
+
+            <div>
+              <h1 class="text-lg font-bold text-white">Election System</h1>
+              <p class="text-sm text-red-200 -mt-0.5">
+                An unexpected error occurred
+              </p>
+            </div>
+          </div>
+
+          <!-- Right side with status -->
+          <div class="flex items-center space-x-3">
+            <span class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-800 bg-red-100 border border-red-200 rounded-full shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Error Detected
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main error content -->
+  <main class="container max-w-4xl px-4 py-16 mx-auto">
+    <div class="flex items-center justify-center min-h-[60vh]">
+      <div class="w-full max-w-2xl">
+        <!-- Error card -->
+        <div class="p-8 bg-white border shadow-xl rounded-2xl border-slate-200 animate-fade-in">
+          <!-- Error icon and title -->
+          <div class="mb-8 text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 mb-6 bg-red-100 rounded-full animate-pulse-slow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            <h1 class="mb-3 text-3xl font-bold text-slate-800">Oops! Something went wrong</h1>
+            <p class="mb-2 text-lg text-slate-600">A fatal error has occurred while processing your request.</p>
+            <p class="text-sm text-slate-500">We apologize for the inconvenience. Please try refreshing the page or return to the previous page.</p>
+          </div>
+
+          <!-- Error details (if available) -->
+          <% if (typeof error !== 'undefined' && error) { %>
+          <div class="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
+            <div class="flex">
+              <svg xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0 w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="ml-3">
+                <h3 class="mb-1 text-sm font-medium text-red-800">Error Details</h3>
+                <div class="text-sm text-red-700">
+                  <% if (typeof error.name !== 'undefined') { %>
+                  <p class="mb-1"><span class="font-medium">Type:</span> <%= error.name %></p>
+                  <% } %>
+                  <% if (typeof error.message !== 'undefined') { %>
+                  <p><span class="font-medium">Message:</span> <%= error.message %></p>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% } %>
+
+          <!-- Action buttons -->
+          <div class="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <!-- Refresh button -->
+            <button onclick="refreshPage()" class="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-white transition-all duration-300 bg-blue-600 border border-transparent rounded-lg shadow-sm btn-hover-effect hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh Page
+            </button>
+
+            <!-- Go back button -->
+            <button onclick="goBack()" class="inline-flex items-center justify-center px-6 py-3 text-sm font-medium transition-all duration-300 bg-white border rounded-lg shadow-sm text-slate-700 border-slate-300 btn-hover-effect hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Go Back
+            </button>
+
+            <!-- Home button -->
+            <button onclick="goHome()" class="inline-flex items-center justify-center px-6 py-3 text-sm font-medium transition-all duration-300 bg-white border rounded-lg shadow-sm text-slate-700 border-slate-300 btn-hover-effect hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Home
+            </button>
+          </div>
+
+          <!-- Additional help -->
+          <div class="pt-6 mt-8 border-t border-slate-200">
+            <div class="text-center">
+              <p class="mb-3 text-sm text-slate-500">If the problem persists, please contact our support team.</p>
+              <div class="flex items-center justify-center space-x-4 text-xs text-slate-400">
+                <div class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Error Time: <%= new Date().toLocaleString() %></span>
+                </div>
+                <div class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Error ID: ERR-<%= Math.random().toString(36).substr(2, 9).toUpperCase() %></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical details (collapsible) -->
+        <div class="mt-6">
+          <button onclick="toggleTechnicalDetails()" class="w-full p-4 text-sm text-left transition-colors duration-200 bg-white border rounded-lg border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-slate-700">Technical Details</span>
+              <svg id="technical-arrow" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-200 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+
+          <div id="technical-content" class="hidden p-4 mt-2 border rounded-lg bg-slate-50 border-slate-200">
+            <div class="space-y-2 text-xs text-slate-600">
+              <div><span class="font-medium">User Agent:</span> <span id="user-agent"></span></div>
+              <div><span class="font-medium">URL:</span> <span id="current-url"></span></div>
+              <div><span class="font-medium">Referrer:</span> <span id="referrer-url"></span></div>
+              <div><span class="font-medium">Timestamp:</span> <span id="timestamp"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer matching election results style -->
+  <footer class="py-6 mt-8 text-sm text-center bg-white border-t text-slate-500 border-slate-200">
+    <div class="container max-w-4xl px-4 mx-auto">
+      <p>© <%= new Date().getFullYear() %> Election System. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- JavaScript for functionality -->
+  <script>
+    // Refresh page function
+    function refreshPage() {
+      // Add shake animation to button
+      event.target.classList.add('animate-shake');
+
+      setTimeout(() => {
+        location.reload();
+      }, 500);
+    }
+
+    // Go back function
+    function goBack() {
+      // Add animation to button
+      event.target.classList.add('animate-shake');
+
+      setTimeout(() => {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          // Fallback to home if no history
+          window.location.href = '/';
+        }
+      }, 300);
+    }
+
+    // Go home function
+    function goHome() {
+      // Add animation to button
+      event.target.classList.add('animate-shake');
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 300);
+    }
+
+    // Toggle technical details
+    function toggleTechnicalDetails() {
+      const content = document.getElementById('technical-content');
+      const arrow = document.getElementById('technical-arrow');
+
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        arrow.classList.add('rotate-180');
+
+        // Populate technical details
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('referrer-url').textContent = document.referrer || 'Direct access';
+        document.getElementById('timestamp').textContent = new Date().toISOString();
+      } else {
+        content.classList.add('hidden');
+        arrow.classList.remove('rotate-180');
+      }
+    }
+
+    // Auto-hide error details after 30 seconds (optional)
+    setTimeout(() => {
+      const errorDetails = document.querySelector('.bg-red-50');
+      if (errorDetails) {
+        errorDetails.style.transition = 'opacity 0.5s ease';
+        errorDetails.style.opacity = '0.7';
+      }
+    }, 30000);
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(event) {
+      // R key for refresh
+      if (event.key === 'r' || event.key === 'R') {
+        if (event.ctrlKey || event.metaKey) {
+          return; // Allow browser refresh
+        }
+        event.preventDefault();
+        refreshPage();
+      }
+
+      // Escape key for go back
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        goBack();
+      }
+
+      // H key for home
+      if (event.key === 'h' || event.key === 'H') {
+        if (!event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          goHome();
+        }
+      }
+    });
+
+    // Console log for debugging
+    console.log('Error page loaded at:', new Date().toISOString());
+  </script>
+</body>
+
+</html>

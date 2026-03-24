@@ -1,0 +1,37 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const election_1 = __importDefault(require("./routes/election"));
+const auth_1 = __importDefault(require("./routes/auth"));
+const candidate_1 = __importDefault(require("./routes/candidate"));
+const vote_1 = __importDefault(require("./routes/vote"));
+const registerDevice_1 = __importDefault(require("./routes/registerDevice"));
+const population_1 = __importDefault(require("./routes/population"));
+const user_1 = __importDefault(require("./routes/user"));
+const department_1 = __importDefault(require("./routes/department"));
+const reports_1 = __importDefault(require("./routes/reports"));
+const voter_1 = __importDefault(require("./routes/voter"));
+const ipAddress_1 = __importDefault(require("./routes/ipAddress"));
+const position_1 = __importDefault(require("./routes/position"));
+const faceRecognition_1 = __importDefault(require("./routes/faceRecognition"));
+const certification_1 = __importDefault(require("./routes/certification"));
+const router = (0, express_1.Router)();
+// API Routes
+router.use(faceRecognition_1.default);
+router.use(election_1.default);
+router.use(auth_1.default);
+router.use(candidate_1.default);
+router.use(vote_1.default);
+router.use(registerDevice_1.default);
+router.use(population_1.default);
+router.use(user_1.default);
+router.use(department_1.default);
+router.use(reports_1.default);
+router.use(voter_1.default);
+router.use(ipAddress_1.default);
+router.use(position_1.default);
+router.use(certification_1.default);
+exports.default = router;

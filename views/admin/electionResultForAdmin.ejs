@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Results | <%= electionInfo.election_name %></title>
+  <script src="/javascript/lib/jquery-3.7.1.min.js"></script>
+  <script src="/javascript/lib/socket.io.min.js" defer></script>
+  <script src="/javascript/lib/sweetalert2@11.js" defer></script>
+  <script type="module" src="/javascript/voter/electionResultForVoter.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .animate-slide-in {
+      animation: slideIn 0.4s ease-out forwards;
+    }
+
+    .animate-pulse-once {
+      animation: pulse 1s ease-in-out;
+    }
+
+    .progress-bar-animation {
+      transition: width 1s ease-out;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* Glassmorphism effects */
+    .glass-effect {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Confetti for winners */
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      opacity: 0;
+    }
+
+    /* Collapsible content styling - IMPROVED */
+    .dept-content {
+      display: none;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .dept-content.expanded {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Arrow rotation */
+    .dept-arrow {
+      transition: transform 0.3s ease;
+    }
+
+    .dept-arrow.rotated {
+      transform: rotate(180deg);
+    }
+
+    /* Image fallback styling */
+    .candidate-image {
+      transition: opacity 0.2s ease;
+    }
+
+    .candidate-image.hidden {
+      display: none;
+    }
+
+    .candidate-initials {
+      transition: opacity 0.2s ease;
+    }
+
+    .candidate-initials.hidden {
+      display: none;
+    }
+
+    /* Winner rank styling */
+    .winner-rank-1 {
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      color: #92400e;
+    }
+
+    .winner-rank-2 {
+      background: linear-gradient(135deg, #c0c0c0, #e5e7eb);
+      color: #374151;
+    }
+
+    .winner-rank-3 {
+      background: linear-gradient(135deg, #cd7f32, #d97706);
+      color: #ffffff;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen font-sans bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800">
+  <!-- Modern sticky header with glassmorphism -->
+  <header class="sticky top-0 z-50 w-full shadow-lg bg-white/80 backdrop-blur-md">
+    <div class="bg-gradient-to-r from-blue-800 via-blue-700 to-blue-800">
+      <div class="container px-4 mx-auto max-w-7xl">
+        <div class="flex items-center justify-between h-16">
+          <!-- Left side with back button and election name -->
+          <div class="flex items-center space-x-4">
+            <button onclick="history.back()" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-300 rounded-lg shadow-sm bg-blue-700/50 hover:bg-blue-600 hover:shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span class="hidden sm:inline">Back</span>
+            </button>
+
+            <div>
+              <h1 class="text-lg font-bold text-white">
+                <span class="hidden sm:inline">Election Results</span>
+                <span class="sm:hidden">Results</span>
+              </h1>
+              <p class="text-sm text-blue-200 -mt-0.5 truncate max-w-[200px] sm:max-w-xs">
+                <%= electionInfo.election_name %>
+              </p>
+            </div>
+          </div>
+
+          <!-- Right side with status badge and PDF button -->
+          <div class="flex items-center space-x-3">
+            <!-- Add Edit Certification button -->
+            <a href="/admin/election/<%= electionInfo.election_id %>/certification/edit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-300 bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 hover:shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Certification
+            </a>
+
+            <!-- Add Download PDF button -->
+            <button id="generate-result-pdf" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-300 bg-green-600 rounded-lg shadow-sm hover:bg-green-700 hover:shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download PDF
+            </button>
+
+            <% 
+            const now = new Date();
+            const startDate = new Date(electionInfo.date_start);
+            startDate.setHours(parseInt(electionInfo.time_start.split(':')[0]), parseInt(electionInfo.time_start.split(':')[1]));
+            
+            const endDate = new Date(electionInfo.date_end);
+            endDate.setHours(parseInt(electionInfo.time_end.split(':')[0]), parseInt(electionInfo.time_end.split(':')[1]));
+            
+            let statusClass = '';
+            let statusText = '';
+            let statusIcon = '';
+            
+            if (now < startDate) {
+              statusClass = 'bg-blue-100 text-blue-800 border border-blue-200';
+              statusText = 'Upcoming';
+              statusIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            } else if (now > endDate) {
+              statusClass = 'bg-green-100 text-green-800 border border-green-200';
+              statusText = 'Completed';
+              statusIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            } else {
+              statusClass = 'bg-amber-100 text-amber-800 border border-amber-200';
+              statusText = 'In Progress';
+              statusIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />';
+            }
+            %>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium <%= statusClass %> shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <%- statusIcon %>
+              </svg>
+              <%= statusText %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Election info bar with modern design -->
+    <div class="w-full py-3 border-b shadow-sm bg-white/90 border-slate-200">
+      <div class="container px-4 mx-auto max-w-7xl">
+        <div class="flex flex-wrap items-center justify-between gap-y-2">
+          <div class="flex flex-wrap items-center gap-4 text-sm">
+            <div class="flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+              <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span><%= formatDateTime(electionInfo.date_start, electionInfo.time_start) %> - <%= formatDateTime(electionInfo.date_end, electionInfo.time_end) %></span>
+            </div>
+
+            <div class="flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+              <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span><%= candidatesVoteTally.length %> Candidates</span>
+            </div>
+
+            <div class="flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+              <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span><%= positionList.length %> Positions</span>
+            </div>
+          </div>
+
+          <!-- Election ID hidden input -->
+          <input type="hidden" id="election-id" value="<%= electionInfo.election_id %>">
+
+          <!-- Total votes summary -->
+          <div class="flex items-center gap-2 text-sm">
+            <div class="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200">
+              <span class="font-medium">Total Population:</span>
+              <span class="font-bold text-blue-700"><%= electionInfo.total_populations || 0 %></span>
+            </div>
+
+            <% 
+            // Calculate total votes cast across all positions
+            const totalVotesCast = candidatesVoteTally.reduce((sum, candidate) => sum + candidate.vote_count, 0);
+            const votingPercentage = electionInfo.total_populations ? 
+              ((totalVoted.total_voted / electionInfo.total_populations) * 100).toFixed(2) : 0;
+            %>
+
+            <div class="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200">
+              <span class="font-medium">Participation:</span>
+              <span class="font-bold text-blue-700"><%= votingPercentage %>%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content with modern card design -->
+  <main class="container max-w-5xl px-4 py-8 mx-auto">
+    <!-- Results summary cards -->
+    <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Winners card -->
+      <div class="p-5 transition-shadow duration-300 bg-white border shadow-md rounded-xl border-slate-100 hover:shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-slate-800">Winners</h3>
+          <div class="p-2 rounded-full bg-amber-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+          </div>
+        </div>
+
+        <% 
+        // Calculate winners for each position
+        const winners = [];
+        positionList.forEach(position => {
+          if (position === 'SENATOR') {
+            // For senators, find winners by department based on max_select_senator
+            const senatorCandidates = candidatesVoteTally.filter(c => c.position === position);
+            const departments = [...new Set(senatorCandidates.map(c => c.department_name))];
+            
+            departments.forEach(dept => {
+              const deptCandidates = senatorCandidates.filter(c => c.department_name === dept);
+              if (deptCandidates.length > 0) {
+                // Find the department data to get max_select_senator
+                const deptData = departmentData.find(d => d.department_code === dept);
+                const maxSelect = deptData ? deptData.max_select_senator : 1;
+                
+                // Sort candidates by vote count and get top winners based on max_select_senator
+                deptCandidates.sort((a, b) => b.vote_count - a.vote_count);
+                const deptWinners = deptCandidates.slice(0, maxSelect).filter(candidate => candidate.vote_count > 0);
+                
+                deptWinners.forEach((candidate, index) => {
+                  const rankSuffix = index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th';
+                  winners.push({
+                    name: `${candidate.firstname} ${candidate.lastname}`,
+                    position: `${position} (${dept}) - ${index + 1}${rankSuffix} Place`,
+                    votes: candidate.vote_count,
+                    profile: candidate.candidate_profile,
+                    firstname: candidate.firstname,
+                    lastname: candidate.lastname,
+                    rank: index + 1
+                  });
+                });
+              }
+            });
+          } else {
+            // For other positions
+            const positionCandidates = candidatesVoteTally.filter(c => c.position === position);
+            if (positionCandidates.length > 0) {
+              positionCandidates.sort((a, b) => b.vote_count - a.vote_count);
+              if (positionCandidates[0].vote_count > 0) {
+                winners.push({
+                  name: `${positionCandidates[0].firstname} ${positionCandidates[0].lastname}`,
+                  position: position,
+                  votes: positionCandidates[0].vote_count,
+                  profile: positionCandidates[0].candidate_profile,
+                  firstname: positionCandidates[0].firstname,
+                  lastname: positionCandidates[0].lastname,
+                  rank: 1
+                });
+              }
+            }
+          }
+        });
+        %>
+
+        <% if (winners.length > 0) { %>
+        <div class="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+          <% winners.forEach((winner, idx) => { %>
+          <div class="flex items-center p-2 border rounded-lg bg-slate-50 border-slate-100 animate-fade-in" style="animation-delay: <%= (idx * 0.1).toFixed(2) %>s">
+            <div class="relative flex-shrink-0 mr-3">
+              <% if (winner.profile) { %>
+              <!-- Image with fallback to initials -->
+              <img class="object-cover w-8 h-8 border-2 rounded-full border-amber-400 candidate-image" src="/img/candidate_profiles/<%= winner.profile %>" alt="<%= winner.name %>" onerror="handleImageError(this, '<%= winner.firstname.charAt(0) %><%= winner.lastname.charAt(0) %>', 'amber')">
+              <div class="flex items-center justify-center hidden w-8 h-8 text-xs font-bold text-white rounded-full bg-amber-500 candidate-initials">
+                <%= winner.firstname.charAt(0) %><%= winner.lastname.charAt(0) %>
+              </div>
+              <% } else { %>
+              <div class="flex items-center justify-center w-8 h-8 text-xs font-bold text-white rounded-full bg-amber-500">
+                <%= winner.firstname.charAt(0) %><%= winner.lastname.charAt(0) %>
+              </div>
+              <% } %>
+              <div class="absolute flex items-center justify-center w-4 h-4 rounded-full -top-1 -right-1 <%= winner.rank === 1 ? 'winner-rank-1' : winner.rank === 2 ? 'winner-rank-2' : 'winner-rank-3' %>">
+                <span class="text-xs font-bold"><%= winner.rank %></span>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate text-slate-800"><%= winner.name %></p>
+              <p class="text-xs truncate text-slate-500"><%= winner.position %></p>
+            </div>
+            <div class="text-xs font-medium text-amber-600"><%= winner.votes %> votes</div>
+          </div>
+          <% }); %>
+
+        </div>
+        <% } else { %>
+        <div class="flex flex-col items-center justify-center p-4 rounded-lg bg-slate-50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+          </svg>
+          <p class="text-sm text-slate-500">No winners determined yet</p>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Turnout per department card -->
+      <div class="p-5 transition-shadow duration-300 bg-white border shadow-md rounded-xl border-slate-100 hover:shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-slate-800">Department turnouts</h3>
+          <div class="p-2 bg-blue-100 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+        </div>
+
+        <% 
+        // Calculate department turnout
+        const departmentTurnout = [];
+        if (departmentsPopulation && departmentsPopulation.length > 0) {
+          departmentsPopulation.forEach(dept => {
+
+            const totalVotes = departmentVoteSummary.department_votes[dept.program_code]
+            const turnoutPercentage = dept.program_population > 0 ? 
+              ((totalVotes / dept.program_population) * 100).toFixed(2) : 0;
+
+            departmentTurnout.push({
+              name: dept.program_code,
+              population: dept.program_population,
+              votes: totalVotes,
+              percentage: parseFloat(turnoutPercentage)
+            });
+          });
+          
+          // Sort by percentage
+          departmentTurnout.sort((a, b) => b.percentage - a.percentage);
+        }
+        %>
+
+        <% if (departmentTurnout.length > 0) { %>
+        <!-- <div class="space-y-3"> -->
+        <div class="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+          <% departmentTurnout.forEach((dept, idx) => { %>
+          <div class="animate-fade-in" style="animation-delay: <%= (idx * 0.1).toFixed(2) %>s">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center">
+                <span class="flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-white bg-blue-600 rounded-full"><%= idx + 1 %></span>
+                <span class="text-sm font-medium text-slate-800"><%= dept.name %></span>
+              </div>
+              <span class="text-sm font-bold text-blue-700"><%= dept.percentage %>%</span>
+            </div>
+            <div class="w-full h-2 overflow-hidden rounded-full bg-slate-200">
+              <div class="h-full bg-blue-500 rounded-full progress-bar-animation" style="width: <%= dept.percentage %>%"></div>
+            </div>
+            <p class="mt-1 text-xs text-right text-slate-500"><%= dept.votes %> votes / <%= dept.population %> eligible</p>
+          </div>
+          <% }); %>
+        </div>
+        <% } else { %>
+        <div class="flex flex-col items-center justify-center p-4 rounded-lg bg-slate-50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <p class="text-sm text-slate-500">No turnout data available</p>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Election stats card -->
+      <div class="p-5 transition-shadow duration-300 bg-white border shadow-md rounded-xl border-slate-100 hover:shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-slate-800">Election Stats</h3>
+          <div class="p-2 bg-green-100 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 border rounded-lg bg-slate-50 border-slate-100 animate-fade-in" style="animation-delay: 0.1s">
+            <p class="mb-1 text-xs text-slate-500">Total Candidates</p>
+            <p class="text-xl font-bold text-green-600"><%= candidatesVoteTally.length %></p>
+          </div>
+
+          <div class="p-3 border rounded-lg bg-slate-50 border-slate-100 animate-fade-in" style="animation-delay: 0.2s">
+            <p class="mb-1 text-xs text-slate-500">Total Positions</p>
+            <p class="text-xl font-bold text-green-600"><%= positionList.length %></p>
+          </div>
+
+          <div class="p-3 border rounded-lg bg-slate-50 border-slate-100 animate-fade-in" style="animation-delay: 0.3s">
+            <p class="mb-1 text-xs text-slate-500">Total Votes Cast</p>
+            <p class="text-xl font-bold text-green-600"><%= totalVoted.total_voted %></p>
+          </div>
+
+          <div class="p-3 border rounded-lg bg-slate-50 border-slate-100 animate-fade-in" style="animation-delay: 0.4s">
+            <p class="mb-1 text-xs text-slate-500">Departments</p>
+            <p class="text-xl font-bold text-green-600"><%= departmentsPopulation ? departmentsPopulation.length : 0 %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results by position -->
+    <div id="result-box" class="w-full">
+      <% if (positionList && positionList.length > 0) { %>
+      <% if (candidatesVoteTally.length < 1) { %>
+      <!-- No results state with improved design -->
+      <div class="p-8 text-center bg-white border shadow-sm border-slate-200 rounded-xl">
+        <div class="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-slate-100">
+          <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+        </div>
+        <h2 class="mb-2 text-xl font-bold text-slate-800">No Results Available</h2>
+        <p class="max-w-md mx-auto text-slate-600">There are no candidates or results available for this election yet. Check back later for updates.</p>
+      </div>
+      <% } else { %>
+      <!-- Position tabs navigation -->
+      <div class="mb-6 overflow-x-auto scrollbar-hide">
+        <div class="inline-flex items-center min-w-full p-1 space-x-1 rounded-lg bg-slate-100 sm:min-w-0">
+          <% positionList.forEach((position, idx) => { %>
+          <button class="position-tab px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap <%= idx === 0 ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-white/50' %>" data-position="<%= position.replace(/\s+/g, '-').toLowerCase() %>">
+            <%= position %>
+          </button>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Results by position with modern cards -->
+      <div class="grid gap-6">
+        <% 
+            positionList.forEach((position, posIndex) => {
+              // Special handling for SENATOR position
+              if (position === 'SENATOR') {
+                // Get all senator candidates
+                const senatorCandidates = candidatesVoteTally.filter(candidate => candidate.position === position);
+                
+                if (senatorCandidates.length > 0) {
+                  // Get unique departments from senators
+                  const departments = [...new Set(senatorCandidates.map(candidate => candidate.department_name))];
+            %>
+        <!-- SENATOR section -->
+        <section id="<%= position.replace(/\s+/g, '-').toLowerCase() %>" class="position-section overflow-hidden bg-white border border-slate-200 rounded-xl shadow-sm <%= posIndex === 0 ? 'block' : 'hidden' %> animate-fade-in" style="animation-delay: <%= (posIndex * 0.05).toFixed(2) %>s">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <h3 class="flex items-center text-lg font-bold text-slate-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              SENATOR
+            </h3>
+            <span class="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+              <%= departments.length %> Departments
+            </span>
+          </div>
+
+          <!-- Departments container -->
+          <div class="divide-y divide-slate-100">
+            <% 
+                  // Group candidates by department
+                  const departmentGroups = {};
+                  
+                  // Populate department groups
+                  departments.forEach(department => {
+                    const candidatesInDept = senatorCandidates.filter(candidate => candidate.department_name === department);
+                    
+                    if (candidatesInDept.length > 0) {
+                      // Find the department data to get max_select_senator
+                      const deptData = departmentData.find(d => d.department_code === department);
+                      const maxSelect = deptData ? deptData.max_select_senator : 1;
+
+                      // Sort candidates by vote count and determine winners
+                      candidatesInDept.sort((a, b) => b.vote_count - a.vote_count);
+                      const winners = candidatesInDept.slice(0, maxSelect).filter(c => c.vote_count > 0);
+                      const winnerVoteCounts = winners.map(w => w.vote_count);
+
+                      const highestVoteInDept = candidatesInDept.length > 0 ? candidatesInDept[0].vote_count : 0;
+                      const totalVotesInDept = candidatesInDept.reduce((total, candidate) => 
+                        total + candidate.vote_count, 0);
+                        
+                      departmentGroups[department] = {
+                        candidates: candidatesInDept,
+                        highestVote: highestVoteInDept,
+                        totalVotes: totalVotesInDept,
+                        maxSelect: maxSelect,
+                        winners: winners,
+                        winnerVoteCounts: winnerVoteCounts
+                      };
+                    }
+                  });
+                  
+                  // render each department group
+                  Object.keys(departmentGroups).forEach((department, deptIndex) => {
+                    const deptData = departmentGroups[department];
+                  %>
+            <!-- Department section with collapsible design -->
+            <div class="department-section animate-slide-in" style="animation-delay: <%= (deptIndex * 0.1).toFixed(2) %>s">
+              <!-- Department header with toggle -->
+              <button class="flex items-center justify-between w-full px-4 py-3 transition-colors duration-200 dept-toggle bg-slate-50 hover:bg-slate-100 focus:outline-none" data-dept="<%= department.replace(/\s+/g, '-').toLowerCase() %>">
+                <div class="flex items-center">
+                  <div class="flex items-center justify-center w-8 h-8 mr-3 text-blue-700 bg-blue-100 rounded-lg">
+                    <%= department.substring(0, 2) %>
+                  </div>
+                  <div class="text-left">
+                    <h4 class="text-base font-medium text-slate-800"><%= department %> Department</h4>
+                    <p class="text-xs text-slate-500"><%= deptData.candidates.length %> candidates • <%= deptData.totalVotes %> total votes • Top <%= deptData.maxSelect %> winner<%= deptData.maxSelect > 1 ? 's' : '' %></p>
+                  </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-400 dept-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Candidates in this department (collapsible) - COMPLETELY HIDDEN BY DEFAULT -->
+              <div class="p-4 bg-white dept-content">
+                <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                  <% deptData.candidates.forEach((candidate, candIndex) => { 
+                            const department = departmentsPopulation.find(dep => dep.program_code === candidate.department_name);
+                            const population = department ? department.program_population : 0;
+                            const votePercentage = population === 0 ? 0 : ((candidate.vote_count / population) * 100).toFixed(2);
+                            const isWinning = deptData.winnerVoteCounts.includes(candidate.vote_count) && candidate.vote_count > 0;
+                            const winnerRank = isWinning ? deptData.winners.findIndex(w => w.vote_count === candidate.vote_count && w.candidate_id === candidate.candidate_id) + 1 : 0;
+                          %>
+                  <div class="relative p-4 rounded-xl border <%= isWinning ? 'border-green-200 bg-green-50' : 'border-slate-200' %> transition-all duration-200 animate-fade-in" style="animation-delay: <%= (candIndex * 0.1).toFixed(2) %>s">
+                    <% if (isWinning) { %>
+                    <div class="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                      <div class="flex items-center justify-center w-10 h-10 rounded-full shadow-lg <%= winnerRank === 1 ? 'winner-rank-1' : winnerRank === 2 ? 'winner-rank-2' : 'winner-rank-3' %>">
+                        <span class="text-sm font-bold"><%= winnerRank %></span>
+                      </div>
+                    </div>
+                    <% } %>
+
+                    <div class="flex flex-col items-center mb-3 text-center">
+                      <div class="relative mb-3">
+                        <% if (candidate.candidate_profile) { %>
+                        <!-- Image with fallback to initials -->
+                        <img class="object-cover w-20 h-20 rounded-full border-4 <%= isWinning ? 'border-green-500' : 'border-slate-200' %> candidate-image" src="/img/candidate_profiles/<%= candidate.candidate_profile %>" alt="<%= candidate.firstname %> <%= candidate.lastname %>" onerror="handleImageError(this, '<%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>', '<%= isWinning ? 'green' : 'blue' %>')">
+                        <div class="flex items-center justify-center w-20 h-20 text-xl font-bold text-white <%= isWinning ? 'bg-green-500' : 'bg-blue-500' %> rounded-full candidate-initials hidden">
+                          <%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>
+                        </div>
+                        <% } else { %>
+                        <div class="flex items-center justify-center w-20 h-20 text-xl font-bold text-white <%= isWinning ? 'bg-green-500' : 'bg-blue-500' %> rounded-full">
+                          <%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>
+                        </div>
+                        <% } %>
+                      </div>
+
+                      <h4 class="text-base font-medium text-slate-900"><%= candidate.firstname %> <%= candidate.lastname %></h4>
+
+                      <div class="flex items-center justify-center gap-2 mt-1 mb-2">
+                        <% if (candidate.party) { %>
+                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700"><%= candidate.party %></span>
+                        <% } %>
+                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700"><%= candidate.course %></span>
+                      </div>
+
+                      <div class="w-full mt-2">
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="text-xs text-slate-500"><%= candidate.vote_count %> votes</span>
+                          <span class="text-sm font-bold <%= isWinning ? 'text-green-600' : 'text-blue-600' %>"><%= votePercentage %>%</span>
+                        </div>
+
+                        <!-- Vote percentage bar with animation -->
+                        <div class="w-full h-2.5 overflow-hidden bg-slate-200 rounded-full">
+                          <div class="h-full <%= isWinning ? 'bg-green-500' : 'bg-blue-500' %> rounded-full progress-bar-animation" style="width: <%= votePercentage %>%"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <% if (isWinning) { %>
+                    <div class="py-1.5 px-3 text-xs font-medium text-center text-green-700 bg-green-100 rounded-lg mt-2">
+                      Winner - <%= winnerRank %><%= winnerRank === 1 ? 'st' : winnerRank === 2 ? 'nd' : winnerRank === 3 ? 'rd' : 'th' %> Place
+                    </div>
+                    <% } %>
+                  </div>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+            <% }); %>
+          </div>
+        </section>
+        <% 
+                }
+              } else {
+                // Handle other positions
+                const candidatePerPosition = candidatesVoteTally.filter(candidate => candidate.position === position);
+                
+                if (candidatePerPosition.length > 0) {
+                  candidatePerPosition.sort((a, b) => b.vote_count - a.vote_count);
+                  const highestVoteInPosition = candidatePerPosition.reduce((highest, currentCandidateIteration) => 
+                    currentCandidateIteration.vote_count > highest ? currentCandidateIteration.vote_count : highest, 0);
+                  const totalVotesInPosition = candidatePerPosition.reduce((total, candidateVotes) => 
+                    total + candidateVotes.vote_count, 0);
+            %>
+        <section id="<%= position.replace(/\s+/g, '-').toLowerCase() %>" class="position-section overflow-hidden bg-white border border-slate-200 rounded-xl shadow-sm <%= posIndex === 0 ? 'block' : 'hidden' %> animate-fade-in" style="animation-delay: <%= (posIndex * 0.05).toFixed(2) %>s">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <h3 class="flex items-center text-lg font-bold text-slate-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <%= position %>
+            </h3>
+            <span class="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+              <%= candidatePerPosition.length %> Candidates
+            </span>
+          </div>
+
+          <div class="p-4">
+            <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <% candidatePerPosition.forEach((candidate, index) => { 
+                      const votePercentage = electionInfo.total_populations === 0 ? 0 : ((candidate.vote_count / electionInfo.total_populations) * 100).toFixed(2);
+                      const isWinning = candidate.vote_count === highestVoteInPosition && candidate.vote_count > 0;
+                    %>
+              <div class="relative p-4 rounded-xl border <%= isWinning ? 'border-green-200 bg-green-50' : 'border-slate-200' %> transition-all duration-200 animate-fade-in" style="animation-delay: <%= (index * 0.1).toFixed(2) %>s">
+                <% if (isWinning) { %>
+                <div class="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                  <div class="flex items-center justify-center w-10 h-10 bg-green-500 rounded-full shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
+                <% } %>
+
+                <div class="flex flex-col items-center mb-3 text-center">
+                  <div class="relative mb-3">
+                    <% if (candidate.candidate_profile) { %>
+                    <!-- Image with fallback to initials -->
+                    <img class="object-cover w-20 h-20 rounded-full border-4 <%= isWinning ? 'border-green-500' : 'border-slate-200' %> candidate-image" src="/img/candidate_profiles/<%= candidate.candidate_profile %>" alt="<%= candidate.firstname %> <%= candidate.lastname %>" onerror="handleImageError(this, '<%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>', '<%= isWinning ? 'green' : 'blue' %>')">
+                    <div class="flex items-center justify-center w-20 h-20 text-xl font-bold text-white <%= isWinning ? 'bg-green-500' : 'bg-blue-500' %> rounded-full candidate-initials hidden">
+                      <%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>
+                    </div>
+                    <% } else { %>
+                    <div class="flex items-center justify-center w-20 h-20 text-xl font-bold text-white <%= isWinning ? 'bg-green-500' : 'bg-blue-500' %> rounded-full">
+                      <%= candidate.firstname.charAt(0) %><%= candidate.lastname.charAt(0) %>
+                    </div>
+                    <% } %>
+                  </div>
+
+                  <h4 class="text-base font-medium text-slate-900"><%= candidate.firstname %> <%= candidate.lastname %></h4>
+
+                  <div class="flex items-center justify-center gap-2 mt-1 mb-2">
+                    <% if (candidate.party) { %>
+                    <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700"><%= candidate.party %></span>
+                    <% } %>
+                    <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700"><%= candidate.course %></span>
+                  </div>
+
+                  <div class="w-full mt-2">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs text-slate-500"><%= candidate.vote_count %> votes</span>
+                      <span class="text-sm font-bold <%= isWinning ? 'text-green-600' : 'text-blue-600' %>"><%= votePercentage %>%</span>
+                    </div>
+
+                    <!-- Vote percentage bar with animation -->
+                    <div class="w-full h-2.5 overflow-hidden bg-slate-200 rounded-full">
+                      <div class="h-full <%= isWinning ? 'bg-green-500' : 'bg-blue-500' %> rounded-full progress-bar-animation" style="width: <%= votePercentage %>%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <% if (isWinning) { %>
+                <div class="py-1.5 px-3 text-xs font-medium text-center text-green-700 bg-green-100 rounded-lg mt-2">
+                  Winner
+                </div>
+                <% } %>
+              </div>
+              <% }); %>
+            </div>
+          </div>
+        </section>
+        <% 
+                }
+              }
+            });
+            %>
+      </div>
+      <% } %>
+      <% } else { %>
+      <!-- No positions available state with improved design -->
+      <div class="p-8 text-center bg-white border shadow-sm border-slate-200 rounded-xl">
+        <div class="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-slate-100">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 class="mb-2 text-xl font-bold text-slate-800">No Positions Available</h2>
+        <p class="max-w-md mx-auto text-slate-600">No positions or results are available for this election. Please check back later or contact the administrator.</p>
+      </div>
+      <% } %>
+    </div>
+  </main>
+
+  <!-- Modern footer -->
+  <footer class="py-6 mt-8 text-sm text-center bg-white border-t text-slate-500 border-slate-200">
+    <div class="container max-w-5xl px-4 mx-auto">
+      <p class="font-medium">© <%= new Date().getFullYear() %> BCC Web-based E-voting System. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <%
+  function formatDateTime(date, time) {
+    const [hours, minutes] = time.split(':');
+    const dateTime = new Date(date);
+    dateTime.setHours(parseInt(hours), parseInt(minutes));
+    return dateTime.toLocaleString('en-US', { 
+      dateStyle: 'medium', 
+      timeStyle: 'short' 
+    });
+  }
+  %>
+
+  <!-- JavaScript for interactive features -->
+  <script>
+    // Image error handling function
+    function handleImageError(img, initials, colorTheme) {
+      // Hide the failed image
+      img.classList.add('hidden');
+
+      // Show the initials fallback
+      const initialsDiv = img.nextElementSibling;
+      if (initialsDiv && initialsDiv.classList.contains('candidate-initials')) {
+        initialsDiv.classList.remove('hidden');
+
+        // Update the color theme if needed
+        if (colorTheme === 'green') {
+          initialsDiv.classList.remove('bg-blue-500', 'bg-amber-500');
+          initialsDiv.classList.add('bg-green-500');
+        } else if (colorTheme === 'amber') {
+          initialsDiv.classList.remove('bg-blue-500', 'bg-green-500');
+          initialsDiv.classList.add('bg-amber-500');
+        } else {
+          initialsDiv.classList.remove('bg-green-500', 'bg-amber-500');
+          initialsDiv.classList.add('bg-blue-500');
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Position tabs functionality
+      const positionTabs = document.querySelectorAll('.position-tab');
+      const positionSections = document.querySelectorAll('.position-section');
+
+      positionTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Update active tab
+          positionTabs.forEach(t => t.classList.remove('bg-white', 'text-blue-700', 'shadow-sm'));
+          tab.classList.add('bg-white', 'text-blue-700', 'shadow-sm');
+
+          // Show corresponding section
+          const targetPosition = tab.dataset.position;
+          positionSections.forEach(section => {
+            if (section.id === targetPosition) {
+              section.classList.remove('hidden');
+              section.classList.add('block', 'animate-fade-in');
+            } else {
+              section.classList.add('hidden');
+              section.classList.remove('block');
+            }
+          });
+        });
+      });
+
+      // Department toggle functionality - COMPLETELY FIXED
+      const deptToggles = document.querySelectorAll('.dept-toggle');
+
+      deptToggles.forEach(toggle => {
+        toggle.addEventListener('click', () => {
+          const content = toggle.nextElementSibling;
+          const arrow = toggle.querySelector('.dept-arrow');
+
+          // Toggle the expanded class and arrow rotation
+          if (content.classList.contains('expanded')) {
+            // Collapse
+            content.classList.remove('expanded');
+            arrow.classList.remove('rotated');
+          } else {
+            // Expand
+            content.classList.add('expanded');
+            arrow.classList.add('rotated');
+          }
+        });
+      });
+
+      // Animate progress bars on load
+      const progressBars = document.querySelectorAll('.progress-bar-animation');
+      setTimeout(() => {
+        progressBars.forEach(bar => {
+          const width = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => {
+            bar.style.width = width;
+          }, 100);
+        });
+      }, 500);
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+{
+	"name": "BCC-web-based-e-voting",
+	"version": "1.0.0",
+	"description": "Capstone Project about online voting with face recognition",
+	"main": "dist/app.js",
+	"scripts": {
+		"build-css:dev": "tailwindcss -i ./public/css/input.css -o ./public/css/style.css -w",
+		"dev": "cross-env NODE_ENV=development TZ=Asia/Manila ts-node-dev --respawn --transpile-only src/app.ts",
+		"build-css": "tailwindcss -i ./public/css/input.css -o ./public/css/style.css",
+		"build": "npx tsc",
+		"start": "cross-env NODE_ENV=production TZ=Asia/Manila node ./dist/app.js",
+		"build:debug": "tsc --watch --inlineSourceMap"
+	},
+	"author": "John Lester Villarde",
+	"license": "ISC",
+	"dependencies": {
+		"cross-env": "^7.0.3",
+		"csvtojson": "^2.0.10",
+		"dotenv": "^16.4.5",
+		"ejs": "^3.1.10",
+		"express": "^4.19.2",
+		"express-mysql-session": "^3.0.3",
+		"express-session": "^1.18.0",
+		"jspdf": "^3.0.1",
+		"jspdf-autotable": "^5.0.2",
+		"multer": "^1.4.5-lts.1",
+		"mysql2": "^3.9.7",
+		"nodemailer": "^6.9.15",
+		"socket.io": "^4.7.5",
+		"ulid": "^2.3.0",
+		"uuid": "^10.0.0"
+	},
+	"devDependencies": {
+		"@types/bcrypt": "^5.0.2",
+		"@types/bcryptjs": "^2.4.6",
+		"@types/express": "^4.17.21",
+		"@types/express-mysql-session": "^3.0.6",
+		"@types/express-session": "^1.18.0",
+		"@types/multer": "^1.4.12",
+		"@types/node": "^20.11.30",
+		"@types/nodemailer": "^6.4.16",
+		"@types/uuid": "^10.0.0",
+		"nodemon": "^3.1.10",
+		"tailwindcss": "^3.4.3",
+		"ts-node-dev": "^2.0.0",
+		"typescript": "^5.4.3"
+	}
+}

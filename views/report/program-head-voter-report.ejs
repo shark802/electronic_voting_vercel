@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Not Voted Preview</title>
+
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/javascript/lib/jquery-3.7.1.min.js" defer></script>
+  <script src="/javascript/lib/sweetalert2@11.js" defer></script>
+  <script src="/javascript/lib/socket.io.min.js" defer></script>
+  <script type="module" src="/javascript/report/preview-voter-report.js" defer></script>
+
+</head>
+
+<body class="flex flex-col h-screen bg-gray-100">
+
+  <input type="hidden" id="election-id" value="<%= election.election_id %>">
+
+  <header class="z-30 w-full bg-blue-600 shadow-md">
+    <div class="flex items-center justify-between px-4 py-3 lg:px-6">
+      <div class="flex items-center">
+        <a href="/program-head/dashboard/overview">
+          <button class="p-2 mr-4 text-white transition-colors duration-200 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50" aria-label="Go back">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+          </button>
+        </a>
+
+      </div>
+      <h1 class="text-xl font-semibold text-white lg:text-2xl"><%= reportTitle %></h1>
+      <div class="w-6 lg:w-0"></div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out transform -translate-x-full bg-white shadow-lg w-80 lg:translate-x-0 lg:static lg:inset-auto">
+      <div class="flex items-center justify-between p-4 border-b lg:hidden">
+        <h2 class="text-xl font-semibold text-gray-800">Filter Options</h2>
+        <button id="close-sidebar" class="p-2 text-gray-600 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <nav class="h-full px-4 py-6 overflow-y-auto">
+        <form id="filter-form" action="/report/program/voter/<%= election.election_id %>" method="get" class="space-y-6 bg-white">
+          <h2 class="hidden mb-4 text-xl font-semibold text-gray-800 lg:block">Filter Options</h2>
+
+          <div class="space-y-4">
+            <div>
+              <label for="voteStatus" class="block text-sm font-medium text-gray-700">Vote Status</label>
+              <select name="voteStatus" id="voteStatus" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option <%= selectedVoteStatus === 1 ? 'selected' : '' %> value="voted">Voted</option>
+                <option <%= selectedVoteStatus === 0 ? 'selected' : '' %> value="not-voted">Not Voted</option>
+              </select>
+            </div>
+
+            <div class="hidden">
+              <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
+              <select name="department" id="department" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">All Departments</option>
+                <% departments.forEach(department => { %>
+                <option <%= selectedDepartment === department ? 'selected' : '' %> value="<%= department %>"><%= department %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex items-center">
+                <label for="program" class="block text-sm font-medium text-gray-700">Program</label>
+                <span class="relative -top-[2px] hidden">
+                  <svg class="inline w-4 h-4 ml-1 text-gray-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="info-icon-program">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"></path>
+                  </svg>
+                  <div class="absolute hidden w-48 p-2 text-sm text-white bg-gray-800 rounded-lg shadow-lg tooltip" id="tooltip-program">
+                    Please select a department first. This will filter the available programs to choose from.
+                  </div>
+                </span>
+              </div>
+
+              <select name="program" id="program" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">All Programs</option>
+                <% programs.forEach((program, index) => { %>
+
+                <option <%= selectedProgram === program ? 'selected' : '' %> value="<%= program %>"><%= program %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div>
+              <label for="year_level" class="block text-sm font-medium text-gray-700">Year Level</label>
+              <select name="year_level" id="year_level" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">All Year Levels</option>
+                <% yearLevels.forEach(yearLevel => { %>
+                <option <%= selectedYearLevel === yearLevel.toString() ? 'selected' : '' %> value="<%= yearLevel %>"><%= yearLevel %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex items-center">
+                <label for="section" class="block text-sm font-medium text-gray-700">Section</label>
+                <span class="relative inline-block -top-[2px]">
+                  <svg class="inline w-4 h-4 ml-1 text-gray-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="info-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"></path>
+                  </svg>
+                  <div class="absolute hidden w-48 p-2 text-sm text-white bg-gray-800 rounded-lg shadow-lg tooltip" id="tooltip">
+                    Select a program first to filter the sections available for that program.
+                  </div>
+                </span>
+              </div>
+
+              <select name="section" id="section" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">All Sections</option>
+                <% sections.forEach(section => { %>
+                <option <%= selectedSection === section ? 'selected' : '' %> value="<%= section %>"><%= section %></option>
+                <% }) %>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="pt-4">
+            <button type="submit" class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white transition duration-150 ease-in-out bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+              </svg>
+              Apply Filters
+            </button>
+          </div>
+        </form>
+      </nav>
+    </aside>
+
+    <main class="flex flex-col flex-1 overflow-hidden bg-blue-50">
+      <!-- Fixed header with Generate PDF button -->
+      <div class="z-10 bg-white shadow-sm">
+        <div class="container flex items-center justify-between px-4 py-3 mx-auto sm:px-6">
+          <button id="show-sidebar" class="p-2 text-blue-600 transition-colors duration-200 rounded-md lg:hidden hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" aria-label="Toggle sidebar">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+
+          <div class="flex justify-end flex-1">
+            <button id="generate-pdf" class="flex items-center px-3 py-2 text-sm font-medium text-white transition-colors duration-300 bg-green-500 rounded-md sm:px-4 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+              <svg class="w-5 h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+              <span class="hidden sm:inline">Generate PDF Report</span>
+              <span class="sm:hidden">PDF</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable content area -->
+      <div class="flex-1 overflow-x-hidden overflow-y-auto">
+        <div class="container px-3 py-8 mx-auto lg:px-6">
+          <% if (users.length === 0) { %>
+
+          <p class="text-center text-gray-600">No users found matching the criteria.</p>
+
+          <% } else { %>
+
+          <div class="overflow-x-auto bg-white rounded-lg shadow">
+            <table class="w-full table-auto">
+              <thead>
+                <tr class="text-sm leading-normal text-white uppercase bg-blue-500">
+                  <th class="px-6 py-3 text-left">#</th>
+                  <th class="px-6 py-3 text-left">ID Number</th>
+                  <th class="px-6 py-3 text-left">Full Name</th>
+                  <th class="px-6 py-3 text-left">Course/Year/Section</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm text-gray-600">
+                <% users.forEach((user, index) => { %>
+                <tr class="transition-colors duration-200 border-b border-gray-200 hover:bg-blue-100">
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    <span class="font-medium"><%= (page - 1) * 30 + index + 1 %></span>
+                  </td>
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    <span class="font-medium"><%= user.id_number %></span>
+                  </td>
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    <span><%= user.lastname %>, <%= user.firstname %></span>
+                  </td>
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    <span><%= user.course %> <%= user.year_level %>-<%= user.section %></span>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination controls -->
+          <div class="flex items-center justify-between mt-6">
+            <p class="mr-4 text-sm text-gray-600">
+              Showing <%= (page - 1) * 30 + 1 %> to <%= Math.min(page * 30, usersSize) %> of <%= usersSize %> entries
+            </p>
+            <div class="flex items-center space-x-2">
+              <% if (page > 1) { %>
+              <a href="?page=<%= parseInt(page) - 1 %>&voteStatus=<%= selectedVoteStatus %>&department=<%= selectedDepartment %>&program=<%= selectedProgram %>&year_level=<%= selectedYearLevel %>&section=<%= selectedSection %>" class="px-3 py-1 text-sm font-medium text-white transition-colors duration-300 bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Previous</a>
+              <% } %>
+              <% if (page * 30 < usersSize) { %>
+              <a href="?page=<%= parseInt(page) + 1 %>&voteStatus=<%= selectedVoteStatus %>&department=<%= selectedDepartment %>&program=<%= selectedProgram %>&year_level=<%= selectedYearLevel %>&section=<%= selectedSection %>" class="px-3 py-1 text-sm font-medium text-white transition-colors duration-300 bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Next</a>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- <script>
+    document.getElementById('show-sidebar').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.remove('-translate-x-full');
+    });
+
+    document.getElementById('close-sidebar').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+    });
+
+    const infoIcon = document.getElementById('info-icon');
+    const tooltip = document.getElementById('tooltip');
+
+    infoIcon.addEventListener('mouseenter', function() {
+      tooltip.classList.remove('hidden');
+    });
+
+    infoIcon.addEventListener('mouseleave', function() {
+      tooltip.classList.add('hidden');
+    });
+  </script> -->
+
+</body>
+
+</html>
