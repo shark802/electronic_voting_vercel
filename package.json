@@ -5,10 +5,10 @@
 	"main": "dist/app.js",
 	"scripts": {
 		"build-css:dev": "tailwindcss -i ./public/css/input.css -o ./public/css/style.css -w",
-		"dev": "cross-env NODE_ENV=development TZ=$TZ ts-node-dev --respawn --transpile-only src/app.ts",
+		"dev": "cross-env NODE_ENV=development TZ=Asia/Manila ts-node-dev --respawn --transpile-only src/app.ts",
 		"build-css": "tailwindcss -i ./public/css/input.css -o ./public/css/style.css",
 		"build": "npx tsc",
-		"start": "cross-env NODE_ENV=production TZ=$TZ node ./dist/app.js",
+		"start": "cross-env NODE_ENV=production TZ=Asia/Manila node ./dist/app.js",
 		"build:debug": "tsc --watch --inlineSourceMap"
 	},
 	"author": "John Lester Villarde",
