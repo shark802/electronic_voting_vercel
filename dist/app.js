@@ -42,6 +42,7 @@ const multerConfig_1 = __importDefault(require("./config/multerConfig"));
 require("./events");
 multerConfig_1.default.none();
 dotenv_1.default.config();
+process.env.TZ = process.env.APP_TIMEZONE || "Asia/Manila";
 const app = (0, express_1.default)();
 // Required on Vercel (and other reverse proxies) for correct client IP and secure cookies
 if (process.env.VERCEL) {

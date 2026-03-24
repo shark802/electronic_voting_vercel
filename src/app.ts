@@ -17,6 +17,7 @@ import './events';
 upload.none();
 
 dotenv.config();
+process.env.TZ = process.env.APP_TIMEZONE || "Asia/Manila";
 const app = express();
 // Required on Vercel (and other reverse proxies) for correct client IP and secure cookies
 if (process.env.VERCEL) {
