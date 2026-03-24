@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const database_1 = require("../config/database");
 const query_1 = require("../data_access/query");
 const globalEventEmitterInstance_1 = require("./globalEventEmitterInstance");
@@ -21,11 +22,16 @@ globalEventEmitterInstance_1.eventEmitter.on('addCandidateEvent', (electionId) =
     let worker = null;
     try {
         const users = yield (0, query_1.selectQuery)(database_1.pool, 'SELECT * FROM users WHERE is_active = 1');
-        // Determine the correct path based on environment
-        const isDev = process.env.NODE_ENV !== 'production';
-        const workerPath = isDev
-            ? path_1.default.join(__dirname, '../../src/utils/workerFiles/registerVotersOnElectionWorker.ts')
-            : path_1.default.join(__dirname, '../utils/workerFiles/registerVotersOnElectionWorker.js');
+        const candidateWorkerPaths = [
+            path_1.default.join(__dirname, "../utils/workerFiles/registerVotersOnElectionWorker.js"),
+            path_1.default.join(__dirname, "../utils/workerFiles/registerVotersOnElectionWorker.ts"),
+            path_1.default.join(process.cwd(), "dist/utils/workerFiles/registerVotersOnElectionWorker.js"),
+            path_1.default.join(process.cwd(), "src/utils/workerFiles/registerVotersOnElectionWorker.ts"),
+        ];
+        const workerPath = candidateWorkerPaths.find((candidatePath) => fs_1.default.existsSync(candidatePath));
+        if (!workerPath) {
+            throw new Error("registerVotersOnElectionWorker file was not found in expected locations.");
+        }
         worker = new worker_threads_1.Worker(workerPath);
         worker.postMessage({ users, electionId });
         worker.on('message', (result) => {

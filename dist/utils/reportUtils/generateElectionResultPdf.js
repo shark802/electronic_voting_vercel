@@ -244,34 +244,38 @@ function renderSignatures(pdf, pageWidth, pageHeight, yPosition, certificationDe
         const leftColumnX = 20;
         const rightColumnX = pageWidth / 2 + 20;
         const signatureLineWidth = 60;
-        // Prepared By (only if there's data)
-        if (details.preparedBy && details.preparedBy.length > 0) {
+        const marginBottom = 30; // Reduced bottom margin
+        const signatureHeight = 25; // Height needed for one signature
+        // Helper function to check if we need a new page
+        const checkNewPage = (requiredHeight) => {
+            if (yPosition + requiredHeight > pageHeight - marginBottom) {
+                pdf.addPage();
+                yPosition = 20; // Reset position for new page
+                return true;
+            }
+            return false;
+        };
+        // Helper function to render signatures in two columns
+        const renderTwoColumnSignatures = (title, people) => {
+            if (!people || people.length === 0)
+                return yPosition;
+            // Check if we need a new page for the title
+            checkNewPage(15);
             pdf.setFontSize(10);
             pdf.setFont("helvetica", "normal");
-            pdf.text("Prepared By:", leftColumnX, yPosition);
+            pdf.text(`${title}:`, leftColumnX, yPosition);
             yPosition += 15;
-            details.preparedBy.forEach((person) => {
-                // Draw signature line
-                pdf.setDrawColor(0);
-                pdf.setLineWidth(0.5);
-                pdf.line(leftColumnX, yPosition, leftColumnX + signatureLineWidth, yPosition);
-                yPosition += 5;
-                pdf.setFont("helvetica", "normal");
-                pdf.text(person.name, leftColumnX, yPosition);
-                yPosition += 5;
-                pdf.setFont("helvetica", "bold");
-                pdf.text(person.position, leftColumnX, yPosition);
-                yPosition += 15;
-            });
-            yPosition += 10;
-        }
-        // Noted By (only if there's data)
-        if (details.notedBy && details.notedBy.length > 0) {
-            pdf.setFont("helvetica", "normal");
-            pdf.text("Noted By:", leftColumnX, yPosition);
-            yPosition += 15;
-            // Render notedBy in two columns
-            for (let i = 0; i < details.notedBy.length; i += 2) {
+            // Render in two columns
+            for (let i = 0; i < people.length; i += 2) {
+                // Check if we need a new page for the next signature pair
+                if (checkNewPage(signatureHeight)) {
+                    // If we're starting a new page, we might want to repeat the title
+                    if (i > 0) {
+                        pdf.setFont("helvetica", "normal");
+                        pdf.text(`${title} (continued):`, leftColumnX, yPosition);
+                        yPosition += 15;
+                    }
+                }
                 const currentY = yPosition;
                 // Left column
                 pdf.setDrawColor(0);
@@ -279,46 +283,32 @@ function renderSignatures(pdf, pageWidth, pageHeight, yPosition, certificationDe
                 pdf.line(leftColumnX, currentY, leftColumnX + signatureLineWidth, currentY);
                 yPosition += 5;
                 pdf.setFont("helvetica", "normal");
-                pdf.text(details.notedBy[i].name, leftColumnX, yPosition);
+                pdf.text(people[i].name, leftColumnX, yPosition);
                 yPosition += 5;
                 pdf.setFont("helvetica", "bold");
-                pdf.text(details.notedBy[i].position, leftColumnX, yPosition);
+                pdf.text(people[i].position, leftColumnX, yPosition);
                 // Right column (if exists)
-                if (i + 1 < details.notedBy.length) {
+                if (i + 1 < people.length) {
                     yPosition = currentY;
                     pdf.setDrawColor(0);
                     pdf.setLineWidth(0.5);
                     pdf.line(rightColumnX, currentY, rightColumnX + signatureLineWidth, currentY);
                     yPosition += 5;
                     pdf.setFont("helvetica", "normal");
-                    pdf.text(details.notedBy[i + 1].name, rightColumnX, yPosition);
+                    pdf.text(people[i + 1].name, rightColumnX, yPosition);
                     yPosition += 5;
                     pdf.setFont("helvetica", "bold");
-                    pdf.text(details.notedBy[i + 1].position, rightColumnX, yPosition);
+                    pdf.text(people[i + 1].position, rightColumnX, yPosition);
                 }
                 yPosition += 15;
             }
             yPosition += 10;
-        }
-        // Approved By (only if there's data)
-        if (details.approvedBy && details.approvedBy.length > 0) {
-            pdf.setFont("helvetica", "normal");
-            pdf.text("Approved By:", leftColumnX, yPosition);
-            yPosition += 15;
-            details.approvedBy.forEach((person) => {
-                // Draw signature line
-                pdf.setDrawColor(0);
-                pdf.setLineWidth(0.5);
-                pdf.line(leftColumnX, yPosition, leftColumnX + signatureLineWidth, yPosition);
-                yPosition += 5;
-                pdf.setFont("helvetica", "normal");
-                pdf.text(person.name, leftColumnX, yPosition);
-                yPosition += 5;
-                pdf.setFont("helvetica", "bold");
-                pdf.text(person.position, leftColumnX, yPosition);
-                yPosition += 15;
-            });
-        }
+            return yPosition;
+        };
+        // Render all sections using the helper function
+        yPosition = renderTwoColumnSignatures("Prepared By", details.preparedBy);
+        yPosition = renderTwoColumnSignatures("Noted By", details.notedBy);
+        yPosition = renderTwoColumnSignatures("Approved By", details.approvedBy);
         return yPosition;
     });
 }

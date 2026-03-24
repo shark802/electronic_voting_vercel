@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import { pool } from "../config/database";
 import { selectQuery } from "../data_access/query";
 import { User } from "../utils/types/User";
@@ -15,11 +16,16 @@ eventEmitter.on('addCandidateEvent', async (electionId: string) => {
     try {
         const users = await selectQuery<User>(pool, 'SELECT * FROM users WHERE is_active = 1');
 
-        // Determine the correct path based on environment
-        const isDev = process.env.NODE_ENV !== 'production';
-        const workerPath = isDev
-            ? path.join(__dirname, '../../src/utils/workerFiles/registerVotersOnElectionWorker.ts')
-            : path.join(__dirname, '../utils/workerFiles/registerVotersOnElectionWorker.js');
+        const candidateWorkerPaths = [
+            path.join(__dirname, "../utils/workerFiles/registerVotersOnElectionWorker.js"),
+            path.join(__dirname, "../utils/workerFiles/registerVotersOnElectionWorker.ts"),
+            path.join(process.cwd(), "dist/utils/workerFiles/registerVotersOnElectionWorker.js"),
+            path.join(process.cwd(), "src/utils/workerFiles/registerVotersOnElectionWorker.ts"),
+        ];
+        const workerPath = candidateWorkerPaths.find((candidatePath) => fs.existsSync(candidatePath));
+        if (!workerPath) {
+            throw new Error("registerVotersOnElectionWorker file was not found in expected locations.");
+        }
 
         worker = new Worker(workerPath);
 

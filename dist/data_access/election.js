@@ -17,6 +17,7 @@ const database_1 = require("../config/database");
 const query_1 = require("./query");
 const worker_threads_1 = require("worker_threads");
 const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const cryptoService_1 = require("../utils/cryptoService");
 function getElectionInfoById(electionId) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -57,8 +58,18 @@ function generateElectionResult(electionId) {
             yield encryptAndInsert(voteTally); // No votes, just insert an candidates data with 0 votes
             return voteTally;
         }
+        const candidateWorkerPaths = [
+            path_1.default.join(__dirname, "../utils/workerFiles/decryptVoteWorker.js"),
+            path_1.default.join(__dirname, "../utils/workerFiles/decryptVoteWorker.ts"),
+            path_1.default.join(process.cwd(), "dist/utils/workerFiles/decryptVoteWorker.js"),
+            path_1.default.join(process.cwd(), "src/utils/workerFiles/decryptVoteWorker.ts"),
+        ];
+        const workerPath = candidateWorkerPaths.find((candidatePath) => fs_1.default.existsSync(candidatePath));
+        if (!workerPath) {
+            throw new Error("decryptVoteWorker file was not found in expected locations.");
+        }
         // Use Worker to decrypt votes
-        const worker = new worker_threads_1.Worker(path_1.default.join(__dirname, '../utils/workerFiles/decryptVoteWorker.js'));
+        const worker = new worker_threads_1.Worker(workerPath);
         try {
             worker.postMessage(votes);
             // Wait for decrypted votes from the worker

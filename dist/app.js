@@ -43,6 +43,10 @@ require("./events");
 multerConfig_1.default.none();
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+// Required on Vercel (and other reverse proxies) for correct client IP and secure cookies
+if (process.env.VERCEL) {
+    app.set("trust proxy", 1);
+}
 const httpServer = node_http_1.default.createServer(app);
 const io = new socket_io_1.Server(httpServer);
 app.use(express_1.default.json());

@@ -8,6 +8,7 @@ import { Program } from "../utils/types/Program";
 import { Vote } from "../utils/types/Votes";
 import { Worker } from "worker_threads";
 import path from "path";
+import fs from "fs";
 import { CryptoService } from "../utils/cryptoService";
 import { ElectionResult } from "../utils/types/ElectionResult";
 
@@ -52,8 +53,18 @@ export async function generateElectionResult(electionId: string) {
         return voteTally;
     }
 
+    const candidateWorkerPaths = [
+        path.join(__dirname, "../utils/workerFiles/decryptVoteWorker.js"),
+        path.join(__dirname, "../utils/workerFiles/decryptVoteWorker.ts"),
+        path.join(process.cwd(), "dist/utils/workerFiles/decryptVoteWorker.js"),
+        path.join(process.cwd(), "src/utils/workerFiles/decryptVoteWorker.ts"),
+    ];
+    const workerPath = candidateWorkerPaths.find((candidatePath) => fs.existsSync(candidatePath));
+    if (!workerPath) {
+        throw new Error("decryptVoteWorker file was not found in expected locations.");
+    }
     // Use Worker to decrypt votes
-    const worker = new Worker(path.join(__dirname, '../utils/workerFiles/decryptVoteWorker.js'));
+    const worker = new Worker(workerPath);
 
     try {
         worker.postMessage(votes);
